@@ -5,6 +5,7 @@
 #include <NTL/lzz_pXFactoring.h>
  
 using namespace std;
+using namespace helib;
 
 struct Model {
   int class_num; //Number of classes
