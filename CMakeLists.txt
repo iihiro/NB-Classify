@@ -15,4 +15,4 @@ set(COMMON_LIBS stdsc nbc_share helib ntl gmp)
 
 add_subdirectory(stdsc)
 add_subdirectory(nbc)
-#add_subdirectory(demo)
+add_subdirectory(demo)

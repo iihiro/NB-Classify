@@ -30,6 +30,15 @@ class SecureKeyFileManager
 {
     static constexpr long DefaultFheM = 11119;
     static constexpr long DefaultFheL = 180;
+
+public:
+    enum Kind_t : int32_t
+    {
+        kKindUnkonw  = -1,
+        kKindPubKey  = 0,
+        kKindSecKey  = 1,
+        kKindContext = 2,
+    };
     
 public:
     SecureKeyFileManager(const std::string& pubkey_filename,
@@ -40,17 +49,13 @@ public:
 
     void initialize(void);
 
-    size_t pubkey_size(void) const;
-    size_t seckey_size(void) const;
+    size_t size(const Kind_t kind) const;
 
-    void pubkey_data(void* buffer);
-    void seckey_data(void* buffer);
+    void data(const Kind_t kind, void* buffer);
 
-    bool is_exist_pubkey(void) const;
-    bool is_exist_seckey(void) const;
+    bool is_exist(const Kind_t kind) const;
 
-    std::string pubkey_filename(void) const;
-    std::string seckey_filename(void) const;
+    std::string filename(const Kind_t kind) const;
 
 private:
     struct Impl;

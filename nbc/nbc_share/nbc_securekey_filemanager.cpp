@@ -16,6 +16,7 @@
  */
 
 #include <sstream>
+#include <unordered_map>
 #include <stdsc/stdsc_log.hpp>
 #include <stdsc/stdsc_exception.hpp>
 #include <nbc_share/nbc_utility.hpp>
@@ -34,12 +35,12 @@ struct SecureKeyFileManager::Impl
          const std::string& seckey_filename,
          const std::string& context_filename,
          const long fheM = DefaultFheM, const long fheL = DefaultFheL)
-      : pubkey_filename_(pubkey_filename),
-        seckey_filename_(seckey_filename),
-        context_filename_(context_filename),
-        m_(fheM),
-        L_(fheL)
+        : m_(fheM),
+          L_(fheL)
     {
+        filenames_.emplace(kKindPubKey,  pubkey_filename);
+        filenames_.emplace(kKindSecKey,  seckey_filename);
+        filenames_.emplace(kKindContext, context_filename);
     }
     ~Impl(void) = default;
 
@@ -62,87 +63,53 @@ struct SecureKeyFileManager::Impl
             << "PhiM: " << context.zMStar.getPhiM();
         STDSC_LOG_INFO(oss.str().c_str());
 
-        std::ofstream contextfile(context_filename_, std::ios::binary);
+        std::ofstream contextfile(filename(kKindContext), std::ios::binary);
         helib::writeContextBaseBinary(contextfile, context);
         helib::writeContextBinary(contextfile, context);
         
-        std::ofstream pubkeyfile(pubkey_filename_, std::ios::binary);
+        std::ofstream pubkeyfile(filename(kKindPubKey), std::ios::binary);
         helib::writePubKeyBinary(pubkeyfile, publicKey);
         pubkeyfile.close();
 
-        std::ofstream seckeyfile(seckey_filename_, std::ios::binary);
+        std::ofstream seckeyfile(filename(kKindSecKey), std::ios::binary);
         helib::writeSecKeyBinary(seckeyfile, secretKey);
         seckeyfile.close();
     }
 
-    size_t pubkey_size(void) const
+    size_t size(const Kind_t kind) const
     {
-        return nbc_share::utility::file_size(pubkey_filename_);
+        return nbc_share::utility::file_size(filename(kind));
     }
     
-    size_t seckey_size(void) const
+    void data(const Kind_t kind, void* buffer)
     {
-        return nbc_share::utility::file_size(seckey_filename_);
-    }
-
-    void pubkey_data(void* buffer)
-    {
-        size_t size = pubkey_size();
-        std::ifstream ifs(pubkey_filename_, std::ios::binary);
+        size_t sz = size(kind);
+        std::ifstream ifs(filenames_[kind], std::ios::binary);
         if (!ifs.is_open())
         {
             std::ostringstream oss;
-            oss << "failed to open. (" << pubkey_filename_ << ")";
+            oss << "failed to open. (" << filenames_[kind] << ")";
             STDSC_THROW_FILE(oss.str());
         }
         else
         {
-            ifs.read(reinterpret_cast<char*>(buffer), size);
+            ifs.read(reinterpret_cast<char*>(buffer), sz);
         }
     }
-
-    void seckey_data(void* buffer)
+    
+    bool is_exist(const Kind_t kind) const
     {
-        size_t size = seckey_size();
-        std::ifstream ifs(seckey_filename_, std::ios::binary);
-        if (!ifs.is_open())
-        {
-            std::ostringstream oss;
-            oss << "failed to open. (" << seckey_filename_ << ")";
-            STDSC_THROW_FILE(oss.str());
-        }
-        else
-        {
-            ifs.read(reinterpret_cast<char*>(buffer), size);
-        }
-    }
-
-    bool is_exist_pubkey(void) const
-    {
-        std::ifstream ifs(pubkey_filename_);
+        std::ifstream ifs(filename(kind));
         return ifs.is_open();
     }
 
-    bool is_exist_seckey(void) const
+    std::string filename(const Kind_t kind) const
     {
-        std::ifstream ifs(seckey_filename_);
-        return ifs.is_open();
+        return filenames_.at(kind);
     }
-
-    std::string pubkey_filename(void) const
-    {
-        return pubkey_filename_;
-    }
-
-    std::string seckey_filename(void) const
-    {
-        return seckey_filename_;
-    }
-
+    
 private:
-    std::string pubkey_filename_;
-    std::string seckey_filename_;
-    std::string context_filename_;
+    std::unordered_map<Kind_t, std::string> filenames_;
     long m_ = 11119;
     long L_ = 180;
     
@@ -169,44 +136,24 @@ void SecureKeyFileManager::initialize(void)
     pimpl_->initialize();
 }
 
-size_t SecureKeyFileManager::pubkey_size(void) const
+size_t SecureKeyFileManager::size(const Kind_t kind) const
 {
-    return pimpl_->pubkey_size();
+    return pimpl_->size(kind);
 }
 
-size_t SecureKeyFileManager::seckey_size(void) const
+void SecureKeyFileManager::data(const Kind_t kind, void* buffer)
 {
-    return pimpl_->seckey_size();
+    pimpl_->data(kind, buffer);
 }
 
-void SecureKeyFileManager::pubkey_data(void* buffer)
+bool SecureKeyFileManager::is_exist(const Kind_t kind) const
 {
-    pimpl_->pubkey_data(buffer);
+    return pimpl_->is_exist(kind);
 }
 
-void SecureKeyFileManager::seckey_data(void* buffer)
+std::string SecureKeyFileManager::filename(const Kind_t kind) const
 {
-    pimpl_->seckey_data(buffer);
-}
-
-bool SecureKeyFileManager::is_exist_pubkey(void) const
-{
-    return pimpl_->is_exist_pubkey();
-}
-
-bool SecureKeyFileManager::is_exist_seckey(void) const
-{
-    return pimpl_->is_exist_seckey();
-}
-
-std::string SecureKeyFileManager::pubkey_filename(void) const
-{
-    return pimpl_->pubkey_filename();
-}
-
-std::string SecureKeyFileManager::seckey_filename(void) const
-{
-    return pimpl_->seckey_filename();
+    return pimpl_->filename(kind);
 }
 
 } /* namespace nbc_share */
