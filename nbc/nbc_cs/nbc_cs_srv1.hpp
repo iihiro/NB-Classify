@@ -15,38 +15,43 @@
  * limitations under the License.
  */
 
-#ifndef NBC_TA_SHARE_CALLBACK_PARAM_HPP
-#define NBC_TA_SHARE_CALLBACK_PARAM_HPP
+#ifndef NBC_CS_SRV1_HPP
+#define NBC_CS_SRV1_HPP
 
 #include <memory>
+#include <string>
 
-namespace nbc_share
+namespace stdsc
 {
-    class SecureKeyFileManager;
+class CallbackFunctionContainer;
+class StateContext;
 }
 
-namespace nbc_ta
+namespace nbc_cs
+{
+namespace srv1
 {
 
 /**
- * @brief This class is used to hold the callback parameters for Server#1 on TA.
+ * @brief Provides Server#1 on CS.
  */
-struct CallbackParam
+class CSServer
 {
-    CallbackParam(void);
-    ~CallbackParam(void) = default;
-    
-    void set_skm(std::shared_ptr<nbc_share::SecureKeyFileManager>& skm);
-    nbc_share::SecureKeyFileManager& get_skm(void);
+public:
+    CSServer(const char* port, stdsc::CallbackFunctionContainer& callback,
+             stdsc::StateContext& state);
+    ~CSServer(void) = default;
 
-    void set_result(const int32_t session_id, const int64_t result_index);
-    int64_t get_result(const int32_t session_id) const;
+    void start(void);
+    void stop(void);
+    void wait(void);
 
 private:
     struct Impl;
     std::shared_ptr<Impl> pimpl_;
 };
 
-} /* namespace nbc_ta */
+} /* namespace srv1 */
+} /* namespace nbc_cs */
 
-#endif /* NBC_TA_SHARE_CALLBACK_PARAM_HPP */
+#endif /* NBC_CS_SRV1_HPP */

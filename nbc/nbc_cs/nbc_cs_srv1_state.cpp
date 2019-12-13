@@ -18,7 +18,7 @@
 #include <mutex>
 #include <stdsc/stdsc_state.hpp>
 #include <stdsc/stdsc_log.hpp>
-#include <nbc_cs/nbc_cs_srv2_state.hpp>
+#include <nbc_cs/nbc_cs_srv1_state.hpp>
 
 namespace nbc_cs
 {

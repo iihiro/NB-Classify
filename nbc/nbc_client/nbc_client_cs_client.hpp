@@ -15,38 +15,48 @@
  * limitations under the License.
  */
 
-#ifndef NBC_TA_SHARE_CALLBACK_PARAM_HPP
-#define NBC_TA_SHARE_CALLBACK_PARAM_HPP
+#ifndef NBC_CLIENT_CS_CLIENT_HPP
+#define NBC_CLIENT_CS_CLIENT_HPP
 
 #include <memory>
+#include <string>
+#include <stdsc/stdsc_thread.hpp>
 
-namespace nbc_share
+namespace nbc_client
 {
-    class SecureKeyFileManager;
-}
-
-namespace nbc_ta
-{
+class CSParam;
 
 /**
- * @brief This class is used to hold the callback parameters for Server#1 on TA.
+ * @brief Provides client for Server#1 on CS.
  */
-struct CallbackParam
+template <class T = CSParam>
+class CSClient : public stdsc::Thread<T>
 {
-    CallbackParam(void);
-    ~CallbackParam(void) = default;
-    
-    void set_skm(std::shared_ptr<nbc_share::SecureKeyFileManager>& skm);
-    nbc_share::SecureKeyFileManager& get_skm(void);
+    using super = stdsc::Thread<T>;
 
-    void set_result(const int32_t session_id, const int64_t result_index);
-    int64_t get_result(const int32_t session_id) const;
+public:
+    CSClient(const char* host, const char* port);
+    virtual ~CSClient(void);
+
+    void start(T& param);
+    void wait(void);
+
+    
 
 private:
+    virtual void exec(T& args,
+                      std::shared_ptr<stdsc::ThreadException> te) const;
+
     struct Impl;
     std::shared_ptr<Impl> pimpl_;
 };
 
-} /* namespace nbc_ta */
+struct CSParam
+{
+    std::string info_filename;
+    std::string test_filename;
+};
 
-#endif /* NBC_TA_SHARE_CALLBACK_PARAM_HPP */
+} /* namespace nbc_client */
+
+#endif /* NBC_CLIENT_CS_CLIENT_HPP */

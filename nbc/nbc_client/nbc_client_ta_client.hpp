@@ -41,6 +41,7 @@ public:
 
     void start(T& param);
     void wait(void);
+
     void get_result(int64_t& resutl);
 
 private:

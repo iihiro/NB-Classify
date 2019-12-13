@@ -15,38 +15,48 @@
  * limitations under the License.
  */
 
-#ifndef NBC_TA_SHARE_CALLBACK_PARAM_HPP
-#define NBC_TA_SHARE_CALLBACK_PARAM_HPP
+#ifndef NBC_ENCDATA_HPP
+#define NBC_ENCDATA_HPP
 
+#include <iostream>
 #include <memory>
+#include <vector>
+
+namespace helib
+{
+class Ctxt;
+}
 
 namespace nbc_share
 {
-    class SecureKeyFileManager;
-}
-
-namespace nbc_ta
-{
 
 /**
- * @brief This class is used to hold the callback parameters for Server#1 on TA.
+ * @brief This clas is used to hold the encrypted data.
  */
-struct CallbackParam
+struct EncData
 {
-    CallbackParam(void);
-    ~CallbackParam(void) = default;
-    
-    void set_skm(std::shared_ptr<nbc_share::SecureKeyFileManager>& skm);
-    nbc_share::SecureKeyFileManager& get_skm(void);
+    EncData(void);
+    ~EncData(void) = default;
 
-    void set_result(const int32_t session_id, const int64_t result_index);
-    int64_t get_result(const int32_t session_id) const;
+    void generate(const std::vector<long>& inputdata,
+                  const std::string& pubkey_filename);
+
+    void save_to_stream(std::ostream& os) const;
+
+    void load_from_stream(std::istream& is, const std::string& pubkey_filename);
+
+    size_t size(void) const;
+
+    const helib::Ctxt& data(void) const;
+    helib::Ctxt& data(void);
+
+    size_t stream_size(void) const;
 
 private:
     struct Impl;
     std::shared_ptr<Impl> pimpl_;
 };
 
-} /* namespace nbc_ta */
+} /* namespace nbc_share */
 
-#endif /* NBC_TA_SHARE_CALLBACK_PARAM_HPP */
+#endif /* NBC_ENCDATA_HPP */

@@ -15,38 +15,44 @@
  * limitations under the License.
  */
 
-#ifndef NBC_TA_SHARE_CALLBACK_PARAM_HPP
-#define NBC_TA_SHARE_CALLBACK_PARAM_HPP
+#ifndef NBC_PUBKEY_HPP
+#define NBC_PUBKEY_HPP
 
+#include <iostream>
+#include <string>
 #include <memory>
+
+namespace helib
+{
+    class FHEcontext;
+    class FHEPubKey;
+}
 
 namespace nbc_share
 {
-    class SecureKeyFileManager;
-}
-
-namespace nbc_ta
-{
 
 /**
- * @brief This class is used to hold the callback parameters for Server#1 on TA.
+ * @brief This clas is used to hold the public key.
  */
-struct CallbackParam
+struct PubKey
 {
-    CallbackParam(void);
-    ~CallbackParam(void) = default;
-    
-    void set_skm(std::shared_ptr<nbc_share::SecureKeyFileManager>& skm);
-    nbc_share::SecureKeyFileManager& get_skm(void);
+    PubKey(void);
+    ~PubKey(void) = default;
 
-    void set_result(const int32_t session_id, const int64_t result_index);
-    int64_t get_result(const int32_t session_id) const;
+    void save_to_stream(std::ostream& os) const;
+    void load_from_stream(std::istream& is);
+
+    void save_to_file(const std::string& filepath) const;
+    void load_from_file(const std::string& filepath);
+    
+    const helib::FHEcontext& context(void) const;
+    const helib::FHEPubKey&  pubkey(void) const;
 
 private:
     struct Impl;
     std::shared_ptr<Impl> pimpl_;
 };
 
-} /* namespace nbc_ta */
+} /* namespace nbc_share */
 
-#endif /* NBC_TA_SHARE_CALLBACK_PARAM_HPP */
+#endif /* NBC_PUBKEY_HPP */

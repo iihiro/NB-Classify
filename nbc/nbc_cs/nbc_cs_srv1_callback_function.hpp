@@ -15,50 +15,34 @@
  * limitations under the License.
  */
 
-#ifndef NBC_TA_SRV1_HPP
-#define NBC_TA_SRV1_HPP
+#ifndef NBC_CS_SRV1_CALLBACK_FUNCTION_HPP
+#define NBC_CS_SRV1_CALLBACK_FUNCTION_HPP
 
-#include <memory>
-#include <string>
+#include <stdsc/stdsc_callback_function.hpp>
 
-namespace stdsc
+namespace nbc_cs
 {
-class CallbackFunctionContainer;
-class StateContext;
+struct CallbackParam;
 }
 
-namespace nbc_share
-{
-class SecureKeyFileManager;
-}
-
-namespace nbc_ta
+namespace nbc_cs
 {
 namespace srv1
 {
 
+using CallbackParam = nbc_cs::CallbackParam;
+
 /**
- * @brief Provides Server#1 on TA.
+ * @brief Provides callback function in receiving enc model.
  */
-class TAServer
-{
-public:
-    TAServer(const char* port, stdsc::CallbackFunctionContainer& callback,
-             stdsc::StateContext& state,
-             nbc_share::SecureKeyFileManager& skm,
-             bool is_generate_securekey = false);
-    ~TAServer(void) = default;
+DECLARE_DATA_CLASS(CallbackFunctionEncModel);
 
-    void start(void);
-    void stop(void);
-    void wait(void);
-
-private:
-    struct Impl;
-    std::shared_ptr<Impl> pimpl_;
-};
+/**
+ * @brief Provides callback function in receiving enc input.
+ */
+DECLARE_DATA_CLASS(CallbackFunctionEncInput);
 
 } /* namespace srv1 */
-} /* namespace nbc_ta */
+} /* namespace nbc_cs */
 
-#endif /* NBC_TA_SRV1_HPP */
+#endif /* NBC_CS_SRV1_CALLBACK_FUNCTION_HPP */

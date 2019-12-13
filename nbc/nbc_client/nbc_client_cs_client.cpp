@@ -26,41 +26,30 @@
 #include <stdsc/stdsc_exception.hpp>
 #include <nbc_share/nbc_packet.hpp>
 #include <nbc_share/nbc_define.hpp>
-#include <nbc_client/nbc_client_ta_client.hpp>
+#include <nbc_client/nbc_client_cs_client.hpp>
 
 namespace nbc_client
 {
     
 template <class T>
-struct TAClient<T>::Impl
+struct CSClient<T>::Impl
 {
     std::shared_ptr<stdsc::ThreadException> te_;
 
     Impl(const char* host, const char* port)
         : host_(host),
-          port_(port),
-          result_(-1)
+          port_(port)
     {
         te_ = stdsc::ThreadException::create();
     }
 
-    void get_result(int64_t& result)
+    int32_t create_session(void)
     {
-        result = result_;
-    }
+        stdsc::Buffer session_id;
+        client_.recv_data_blocking(nbc_share::kControlCodeDownloadSessionID,
+                                   session_id);
 
-    void download_pubkey(const std::string& out_filename)
-    {
-        stdsc::Buffer pubkey;
-        client_.recv_data_blocking(nbc_share::kControlCodeDownloadPubkey,
-                                   pubkey);
-
-        auto data = reinterpret_cast<const char*>(pubkey.data());
-        auto size = pubkey.size();
-        STDSC_LOG_INFO("Saved a public key file. (%s)", out_filename.c_str());
-
-        std::ofstream ofs(out_filename, std::ios::binary);
-        ofs.write(data, size);
+        return *reinterpret_cast<int32_t*>(session_id.data());
     }
 
     void exec(T& args, std::shared_ptr<stdsc::ThreadException> te)
@@ -70,18 +59,18 @@ struct TAClient<T>::Impl
             constexpr uint32_t retry_interval_usec = NBC_RETRY_INTERVAL_USEC;
             constexpr uint32_t timeout_sec = NBC_TIMEOUT_SEC;
 
-            STDSC_LOG_INFO("Connecting to Server#1 on TA.");
+            STDSC_LOG_INFO("Connecting to Server#1 on CS.");
             client_.connect(host_, port_, retry_interval_usec, timeout_sec);
-            STDSC_LOG_INFO("Connected to Server#1 on TA.");
-
-            download_pubkey(args.pubkey_filename);
+            STDSC_LOG_INFO("Connected to Server#1 on CS.");
+            
 #if 0
-            stdsc::Buffer result_buffer;
-            client_.recv_data_blocking(nbc_share::kControlCodeDownloadResult,
-                                       result_buffer,
-                                       retry_interval_usec_to_request_result);
-            result_ = *reinterpret_cast<int64_t*>(result_buffer.data());
-#endif       
+            auto sid = create_session();
+            STDSC_LOG_INFO("Session ID: %d", sid);
+#endif
+
+            
+
+            
             client_.close();
         }
         catch (const stdsc::AbstractException& e)
@@ -94,44 +83,36 @@ struct TAClient<T>::Impl
 private:
     const char* host_;
     const char* port_;
-    int64_t result_;
     stdsc::Client client_;
 };
 
 template <class T>
-TAClient<T>::TAClient(const char* host, const char* port)
+CSClient<T>::CSClient(const char* host, const char* port)
   : pimpl_(new Impl(host, port))
 {
 }
 
 template <class T>
-TAClient<T>::~TAClient(void)
+CSClient<T>::~CSClient(void)
 {
     super::join();
 }
 
 template <class T>
-void TAClient<T>::start(T& param)
+void CSClient<T>::start(T& param)
 {
     super::start(param, pimpl_->te_);
 }
 
 template <class T>
-void TAClient<T>::wait(void)
+void CSClient<T>::wait(void)
 {
     super::join();
     pimpl_->te_->rethrow_if_has_exception();
 }
 
 template <class T>
-void TAClient<T>::get_result(int64_t& result)
-{
-    this->wait();
-    pimpl_->get_result(result);
-}
-
-template <class T>
-void TAClient<T>::exec(T& args,
+void CSClient<T>::exec(T& args,
                         std::shared_ptr<stdsc::ThreadException> te) const
 {
     try
@@ -144,6 +125,6 @@ void TAClient<T>::exec(T& args,
     }
 }
 
-template class TAClient<TAParam>;
+template class CSClient<CSParam>;
 
 } /* namespace nbc_client */

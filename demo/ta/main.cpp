@@ -97,7 +97,7 @@ static void exec(const Option& opt)
         callback1.set(nbc_share::kControlCodeDownloadResult, cb_result);
     }
 
-    std::shared_ptr<nbc_ta::TAServer> server1 = std::make_shared<nbc_ta::TAServer>(
+    std::shared_ptr<nbc_ta::srv1::TAServer> server1 = std::make_shared<nbc_ta::srv1::TAServer>(
         PORT_TA_SRV1, callback1, state1, cb_param.get_skm(), opt.is_generate_securekey);
     server1->start();
 

@@ -26,6 +26,8 @@
 
 namespace nbc_ta
 {
+namespace srv1
+{
 
 struct TAServer::Impl
 {
@@ -102,4 +104,5 @@ void TAServer::wait(void)
     pimpl_->wait();
 }
 
+} /* namespace srv1 */
 } /* namespace nbc_ta */
