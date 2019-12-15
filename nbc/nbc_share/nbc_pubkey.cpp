@@ -1,33 +1,34 @@
 #include <fstream>
+#include <stdsc/stdsc_exception.hpp>
 #include <nbc_share/nbc_pubkey.hpp>
+#include <nbc_share/nbc_utility.hpp>
 
 #include <helib/FHE.h>
 #include <helib/EncryptedArray.h>
+
+namespace helib
+{
+    class FHEcontext;
+}
 
 namespace nbc_share
 {
 
 struct PubKey::Impl
 {
-    Impl()
+    Impl(const helib::FHEcontext& context)
+        : context_(context)
     {}
 
     void save_to_stream(std::ostream& os) const
     {
-        helib::writePubKeyBinary(os, *pubkey_);
+        helib::writePubKeyBinary(os, *data_);
     }
     
     void load_from_stream(std::istream& is)
     {
-        unsigned long m, p, r;
-        std::vector<long> gens, ords;
-        helib::readContextBase(is, m, p, r, gens, ords);
-        
-        context_ = std::make_shared<helib::FHEcontext>(m, p, r, gens, ords);
-        is >> *context_;
-
-        pubkey_ = std::make_shared<helib::FHEPubKey>(*context_);
-        is >> *pubkey_;
+        data_ = std::make_shared<helib::FHEPubKey>(context_);
+        readPubKeyBinary(is, *data_);
     }
     
     void save_to_file(const std::string& filepath) const
@@ -39,17 +40,28 @@ struct PubKey::Impl
     
     void load_from_file(const std::string& filepath)
     {
-        std::ifstream ifs(filepath);
+        if (!nbc_share::utility::file_exist(filepath)) {
+            std::ostringstream oss;
+            oss << "File not found. (" << filepath << ")";
+            STDSC_THROW_FILE(oss.str());
+        }
+        std::ifstream ifs(filepath, std::ios::binary);
         load_from_stream(ifs);
         ifs.close();
     }
 
+    const helib::FHEPubKey& get(void) const
+    {
+        return *data_;
+    }
+    
 private:
-    std::shared_ptr<helib::FHEcontext> context_;
-    std::shared_ptr<helib::FHEPubKey>  pubkey_;
+    const helib::FHEcontext& context_;
+    std::shared_ptr<helib::FHEPubKey>  data_;
 };
 
-PubKey::PubKey(void) : pimpl_(new Impl())
+PubKey::PubKey(const helib::FHEcontext& context)
+    : pimpl_(new Impl(context))
 {}
 
 void PubKey::save_to_stream(std::ostream& os) const
@@ -70,6 +82,11 @@ void PubKey::save_to_file(const std::string& filepath) const
 void PubKey::load_from_file(const std::string& filepath)
 {
     pimpl_->load_from_file(filepath);
+}
+
+const helib::FHEPubKey& PubKey::get(void) const
+{
+    return pimpl_->get();
 }
     
 } /* namespace nbc_share */

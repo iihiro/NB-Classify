@@ -15,48 +15,46 @@
  * limitations under the License.
  */
 
-#ifndef NBC_ENCDATA_HPP
-#define NBC_ENCDATA_HPP
+#ifndef NBC_TA_CLIENT_BASE_HPP
+#define NBC_TA_CLIENT_BASE_HPP
 
-#include <iostream>
 #include <memory>
-#include <vector>
+#include <string>
+#include <nbc_share/nbc_define.hpp>
 
-namespace helib
+namespace stdsc
 {
-class Ctxt;
+    class Client;
 }
 
 namespace nbc_share
 {
-
+    
 class PubKey;
 class Context;
     
 /**
- * @brief This clas is used to hold the encrypted data.
+ * @brief Provides client for TA.
  */
-struct EncData
+class TAClientBase
 {
-    EncData(const PubKey& pubkey);
-    ~EncData(void) = default;
+public:
+    TAClientBase(const char* host, const char* port);
+    virtual ~TAClientBase(void) = default;
 
-    void generate(const std::vector<long>& inputdata,
-                  const Context& context);
-
-    void save_to_stream(std::ostream& os) const;
-    void load_from_stream(std::istream& is);
-
-    void save_to_file(const std::string& filepath) const;
-    void load_from_file(const std::string& filepath);
+    void connect(const uint32_t retry_interval_usec = NBC_RETRY_INTERVAL_USEC,
+                 const uint32_t timeout_sec = NBC_TIMEOUT_SEC);
+    void disconnect();
     
-    size_t size(void) const;
+    void get_pubkey(nbc_share::PubKey& pubkey,
+                    const char* filename = "pubkey.txt");
 
-    const helib::Ctxt& data(void) const;
-    helib::Ctxt& data(void);
+    void get_context(nbc_share::Context& context,
+                     const char* filename = "context.txt");
 
-    size_t stream_size(void) const;
-
+protected:
+    stdsc::Client& client(void);
+    
 private:
     struct Impl;
     std::shared_ptr<Impl> pimpl_;
@@ -64,4 +62,4 @@ private:
 
 } /* namespace nbc_share */
 
-#endif /* NBC_ENCDATA_HPP */
+#endif /* NBC_TA_CLIENT_BASE_HPP */

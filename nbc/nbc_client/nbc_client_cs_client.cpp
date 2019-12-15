@@ -26,105 +26,101 @@
 #include <stdsc/stdsc_exception.hpp>
 #include <nbc_share/nbc_packet.hpp>
 #include <nbc_share/nbc_define.hpp>
+#include <nbc_share/nbc_pubkey.hpp>
+#include <nbc_share/nbc_encdata.hpp>
 #include <nbc_client/nbc_client_cs_client.hpp>
 
 namespace nbc_client
 {
     
-template <class T>
-struct CSClient<T>::Impl
+struct CSClient::Impl
 {
-    std::shared_ptr<stdsc::ThreadException> te_;
-
     Impl(const char* host, const char* port)
         : host_(host),
           port_(port)
+    {}
+
+    ~Impl(void)
     {
-        te_ = stdsc::ThreadException::create();
+        disconnect();
     }
 
-    int32_t create_session(void)
+    void connect(const uint32_t retry_interval_usec,
+                 const uint32_t timeout_sec)
     {
-        stdsc::Buffer session_id;
-        client_.recv_data_blocking(nbc_share::kControlCodeDownloadSessionID,
-                                   session_id);
-
-        return *reinterpret_cast<int32_t*>(session_id.data());
+        STDSC_LOG_INFO("Connecting to Server#1 on CS.");
+        client_.connect(host_, port_, retry_interval_usec, timeout_sec);
+        STDSC_LOG_INFO("Connected to Server#1 on CS.");
     }
 
-    void exec(T& args, std::shared_ptr<stdsc::ThreadException> te)
+    void disconnect(void)
     {
-        try
-        {
-            constexpr uint32_t retry_interval_usec = NBC_RETRY_INTERVAL_USEC;
-            constexpr uint32_t timeout_sec = NBC_TIMEOUT_SEC;
+        client_.close();
+    }
+    
+    int32_t send_session_create()
+    {
+        STDSC_LOG_INFO("Requesting session create.");
 
-            STDSC_LOG_INFO("Connecting to Server#1 on CS.");
-            client_.connect(host_, port_, retry_interval_usec, timeout_sec);
-            STDSC_LOG_INFO("Connected to Server#1 on CS.");
-            
-#if 0
-            auto sid = create_session();
-            STDSC_LOG_INFO("Session ID: %d", sid);
-#endif
+        stdsc::Buffer buffer;
+        client_.recv_data_blocking(nbc_share::kControlCodeDownloadSessionID, buffer);
+        const int32_t session_id = *reinterpret_cast<int32_t*>(buffer.data());
+        STDSC_LOG_INFO("Sending session id. (id: %d)", session_id);
+        return session_id;
+    }
+    
+    void send_encdata(const int32_t session_id, const nbc_share::EncData& encdata)
+    {
+        stdsc::BufferStream buffstream(encdata.stream_size());
+        std::iostream stream(&buffstream);
+        encdata.save_to_stream(stream);
 
-            
-
-            
-            client_.close();
-        }
-        catch (const stdsc::AbstractException& e)
-        {
-            STDSC_LOG_TRACE("Failed to client process (%s)", e.what());
-            te->set_current_exception();
-        }
+        STDSC_LOG_INFO("Sending encrypted input.");
+        stdsc::Buffer* buffer = &buffstream;
+        client_.send_data_blocking(nbc_share::kControlCodeDataInput, *buffer);
+    }
+    
+    void send_compute_request(const int32_t session_id)
+    {
+        STDSC_LOG_INFO("Requesting compute.");
+        client_.send_request_blocking(nbc_share::kControlCodeRequestCompute);
     }
 
 private:
     const char* host_;
-    const char* port_;
+    const char* port_;    
     stdsc::Client client_;
 };
 
-template <class T>
-CSClient<T>::CSClient(const char* host, const char* port)
+CSClient::CSClient(const char* host, const char* port)
   : pimpl_(new Impl(host, port))
 {
 }
 
-template <class T>
-CSClient<T>::~CSClient(void)
+void CSClient::connect(const uint32_t retry_interval_usec,
+                       const uint32_t timeout_sec)
 {
-    super::join();
+    pimpl_->connect(retry_interval_usec, timeout_sec);
 }
 
-template <class T>
-void CSClient<T>::start(T& param)
+void CSClient::disconnect(void)
 {
-    super::start(param, pimpl_->te_);
+    pimpl_->disconnect();
+}
+    
+int32_t CSClient::send_session_create(void)
+{
+    return pimpl_->send_session_create();
 }
 
-template <class T>
-void CSClient<T>::wait(void)
+void CSClient::send_encdata(const int32_t session_id, const nbc_share::EncData& encdata)
 {
-    super::join();
-    pimpl_->te_->rethrow_if_has_exception();
+    pimpl_->send_encdata(session_id, encdata);
 }
 
-template <class T>
-void CSClient<T>::exec(T& args,
-                        std::shared_ptr<stdsc::ThreadException> te) const
+void CSClient::send_compute_request(const int32_t session_id)
 {
-    try
-    {
-        pimpl_->exec(args, te);
-    }
-    catch (...)
-    {
-        te->set_current_exception();
-    }
+    pimpl_->send_compute_request(session_id);
 }
-
-template class CSClient<CSParam>;
 
 } /* namespace nbc_client */

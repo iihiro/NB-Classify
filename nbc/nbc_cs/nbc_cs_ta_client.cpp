@@ -15,42 +15,42 @@
  * limitations under the License.
  */
 
-#ifndef NBC_CS_SHARE_CALLBACK_PARAM_HPP
-#define NBC_CS_SHARE_CALLBACK_PARAM_HPP
-
 #include <memory>
-
-namespace nbc_share
-{
-class EncData;
-}
+#include <fstream>
+#include <vector>
+#include <cstring>
+#include <stdsc/stdsc_client.hpp>
+#include <stdsc/stdsc_buffer.hpp>
+#include <stdsc/stdsc_packet.hpp>
+#include <stdsc/stdsc_log.hpp>
+#include <stdsc/stdsc_exception.hpp>
+#include <nbc_share/nbc_packet.hpp>
+#include <nbc_share/nbc_define.hpp>
+#include <nbc_share/nbc_pubkey.hpp>
+#include <nbc_share/nbc_context.hpp>
+#include <nbc_cs/nbc_cs_ta_client.hpp>
 
 namespace nbc_cs
 {
-
-class Client;
     
-/**
- * @brief This class is used to hold the callback parameters for Server#1 on CS.
- */
-struct CallbackParam
+struct TAClient::Impl
 {
-    CallbackParam(void);
-    ~CallbackParam(void) = default;
+    Impl(stdsc::Client& client)
+        : client_(client)
+    {}
 
-    std::string pubkey_filename;
-    std::string context_filename;
-    std::string encdata_filename;
+    ~Impl(void)
+    {}
 
-    void set_client(std::shared_ptr<nbc_cs::Client>& client);
-    nbc_cs::Client& get_client(void);
-    
-    std::shared_ptr<nbc_share::EncData> encdata_ptr;
 private:
-    struct Impl;
-    std::shared_ptr<Impl> pimpl_;
+    stdsc::Client& client_;
 };
 
-} /* namespace nbc_cs */
+TAClient::TAClient(const char* host, const char* port)
+    : super(host, port)
+{
+    auto& client = super::client();
+    pimpl_ = std::make_shared<Impl>(client);
+}
 
-#endif /* NBC_CS_SHARE_CALLBACK_PARAM_HPP */
+} /* namespace nbc_cs */

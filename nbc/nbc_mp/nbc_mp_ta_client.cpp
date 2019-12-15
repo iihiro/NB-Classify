@@ -28,9 +28,9 @@
 #include <nbc_share/nbc_define.hpp>
 #include <nbc_share/nbc_pubkey.hpp>
 #include <nbc_share/nbc_context.hpp>
-#include <nbc_client/nbc_client_ta_client.hpp>
+#include <nbc_mp/nbc_mp_ta_client.hpp>
 
-namespace nbc_client
+namespace nbc_mp
 {
     
 struct TAClient::Impl
@@ -41,17 +41,6 @@ struct TAClient::Impl
 
     ~Impl(void)
     {}
-
-    void get_result(int64_t& result)
-    {
-        constexpr uint32_t retry_interval_usec_to_request_result = 4000000;
-        
-        stdsc::Buffer result_buffer;
-        client_.recv_data_blocking(nbc_share::kControlCodeDownloadResult,
-                                   result_buffer,
-                                   retry_interval_usec_to_request_result);
-        result = *reinterpret_cast<int64_t*>(result_buffer.data());
-    }
 
 private:
     stdsc::Client& client_;
@@ -64,9 +53,4 @@ TAClient::TAClient(const char* host, const char* port)
     pimpl_ = std::make_shared<Impl>(client);
 }
 
-void TAClient::get_result(int64_t& result)
-{
-    pimpl_->get_result(result);
-}
-
-} /* namespace nbc_client */
+} /* namespace nbc_mp */

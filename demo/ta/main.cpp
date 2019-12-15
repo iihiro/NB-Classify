@@ -92,6 +92,10 @@ static void exec(const Option& opt)
             new nbc_ta::srv1::CallbackFunctionPubkeyRequest(cb_param));
         callback1.set(nbc_share::kControlCodeDownloadPubkey, cb_pubkey);
         
+        std::shared_ptr<stdsc::CallbackFunction> cb_context(
+            new nbc_ta::srv1::CallbackFunctionContextRequest(cb_param));
+        callback1.set(nbc_share::kControlCodeDownloadContext, cb_context);
+        
         std::shared_ptr<stdsc::CallbackFunction> cb_result(
             new nbc_ta::srv1::CallbackFunctionResultRequest(cb_param));
         callback1.set(nbc_share::kControlCodeDownloadResult, cb_result);

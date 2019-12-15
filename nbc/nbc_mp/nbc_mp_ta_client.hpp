@@ -15,21 +15,14 @@
  * limitations under the License.
  */
 
-#ifndef NBC_CLIENT_TA_CLIENT_HPP
-#define NBC_CLIENT_TA_CLIENT_HPP
+#ifndef NBC_MP_TA_CLIENT_HPP
+#define NBC_MP_TA_CLIENT_HPP
 
 #include <memory>
 #include <string>
-//#include <nbc_share/nbc_define.hpp>
 #include <nbc_share/nbc_ta_client_base.hpp>
 
-//namespace nbc_share
-//{
-//    class PubKey;
-//    class Context;
-//}
-
-namespace nbc_client
+namespace nbc_mp
 {
     
 /**
@@ -43,36 +36,11 @@ public:
     TAClient(const char* host, const char* port);
     virtual ~TAClient(void) = default;
 
-    void get_result(int64_t& resutl);
-
 private:
     struct Impl;
     std::shared_ptr<Impl> pimpl_;
 };
     
-//class TAClient
-//{
-//public:
-//    TAClient(const char* host, const char* port);
-//    virtual ~TAClient(void) = default;
-//
-//    void connect(const uint32_t retry_interval_usec = NBC_RETRY_INTERVAL_USEC,
-//                 const uint32_t timeout_sec = NBC_TIMEOUT_SEC);
-//    void disconnect();
-//    
-//    void get_pubkey(nbc_share::PubKey& pubkey,
-//                    const char* filename = "pubkey.txt");
-//
-//    void get_context(nbc_share::Context& context,
-//                     const char* filename = "context.txt"); // NEXT: nbc_context.[ch]ppを作ったら、次ここから 
-//    
-//    void get_result(int64_t& resutl);
-//
-//private:
-//    struct Impl;
-//    std::shared_ptr<Impl> pimpl_;
-//};
+} /* namespace nbc_mp */
 
-} /* namespace nbc_client */
-
-#endif /* NBC_CLIENT_TA_CLIENT_HPP */
+#endif /* NBC_MP_TA_CLIENT_HPP */

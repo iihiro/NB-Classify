@@ -33,6 +33,11 @@ namespace srv1
 using CallbackParam = nbc_cs::CallbackParam;
 
 /**
+ * @brief Provides callback function in receiving session create.
+ */
+DECLARE_DOWNLOAD_CLASS(CallbackFunctionSessionCreate);
+
+/**
  * @brief Provides callback function in receiving enc model.
  */
 DECLARE_DATA_CLASS(CallbackFunctionEncModel);
@@ -41,6 +46,11 @@ DECLARE_DATA_CLASS(CallbackFunctionEncModel);
  * @brief Provides callback function in receiving enc input.
  */
 DECLARE_DATA_CLASS(CallbackFunctionEncInput);
+
+/**
+ * @brief Provides callback function in receiving compute request.
+ */
+DECLARE_REQUEST_CLASS(CallbackFunctionComputeRequest);
 
 } /* namespace srv1 */
 } /* namespace nbc_cs */

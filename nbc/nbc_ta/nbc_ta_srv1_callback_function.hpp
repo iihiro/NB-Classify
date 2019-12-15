@@ -38,6 +38,11 @@ using CallbackParam = nbc_ta::CallbackParam;
 DECLARE_DOWNLOAD_CLASS(CallbackFunctionPubkeyRequest);
 
 /**
+ * @brief Provides callback function in receiving context request.
+ */
+DECLARE_DOWNLOAD_CLASS(CallbackFunctionContextRequest);
+
+/**
  * @brief Provides callback function in receiving result request.
  */
 DECLARE_DOWNLOAD_CLASS(CallbackFunctionResultRequest);

@@ -2,6 +2,7 @@
 #include <fstream>
 #include <sstream>
 #include <stdsc/stdsc_log.hpp>
+#include <stdsc/stdsc_exception.hpp>
 #include <nbc_client/nbc_client_dataset.hpp>
 
 namespace nbc_client
@@ -15,6 +16,12 @@ DataInfo readInfo(const std::string& filename)
     std::string line;
     int count = 0;
     info.num_features = 0;
+
+    if (!infile.is_open()) {
+        std::ostringstream oss;
+        oss << "Failed to open file. (" << filename << ")";
+        STDSC_THROW_FILE(oss.str());
+    }
 
     while (std::getline(infile, line)) {
         std::stringstream ss(line);
@@ -102,30 +109,34 @@ void printParsedData(const std::vector<long>& parsed)
     
 struct Dataset::Impl
 {
-    Impl(const std::string& info_filename,
-         const std::string& test_filename,
-         const int64_t num_slots)
+    Impl(void)
         : info_()
     {
-        info_ = readInfo(info_filename);
-        STDSC_LOG_TRACE("read info from %s. (nclass: %ld)",
-                        info_filename.c_str(),
-                        info_.class_num);
+    }
 
+    ~Impl(void)
+    {}
+
+    void read(const std::string& info_filename,
+              const std::string& test_filename)
+    {
+        info_ = readInfo(info_filename);
+        STDSC_LOG_INFO("read info from %s. (nclass: %d)",
+                       info_filename.c_str(), info_.class_num);
+        
         auto orig_data = readData(test_filename);
         STDSC_LOG_TRACE("read test data from %s.",
                         test_filename.c_str());
+
+        data_.clear();
         for (const auto& d : orig_data) {
             std::vector<long> tmp = {1};
             auto tmp2 = parseData(d, info_.attr_values);
             tmp.insert(tmp.end(), tmp2.begin(), tmp2.end());
-            tmp.resize(num_slots);
+            //tmp.resize(num_slots); //-> encrypt時にリサイズするようにする
             data_.push_back(tmp);
         }
     }
-
-    ~Impl()
-    {}
 
     const DataInfo& info(void) const
     {
@@ -133,6 +144,7 @@ struct Dataset::Impl
     }
     
     const std::vector<std::vector<long>>& data(void) const
+    //std::vector<std::vector<long>>& data(void)
     {
         return data_;
     }
@@ -142,18 +154,23 @@ private:
     std::vector<std::vector<long>> data_;
 };
 
-Dataset::Dataset(const std::string& info_filename,
-                 const std::string& test_filename,
-                 const int64_t num_slots)
-    : pimpl_(new Impl(info_filename, test_filename, num_slots))
+Dataset::Dataset(void)
+    : pimpl_(new Impl())
 {}
 
+void Dataset::read(const std::string& info_filename,
+                   const std::string& test_filename)
+{
+    return pimpl_->read(info_filename, test_filename);
+}
+    
 const DataInfo& Dataset::info(void) const
 {
     return pimpl_->info();
 }
     
 const std::vector<std::vector<long>>& Dataset::data(void) const
+//std::vector<std::vector<long>>& Dataset::data(void)
 {
     return pimpl_->data();
 }

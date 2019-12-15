@@ -15,37 +15,42 @@
  * limitations under the License.
  */
 
-#ifndef NBC_CS_SHARE_CALLBACK_PARAM_HPP
-#define NBC_CS_SHARE_CALLBACK_PARAM_HPP
+#ifndef NBC_CS_CLIENT_HPP
+#define NBC_CS_CLIENT_HPP
 
 #include <memory>
+#include <nbc_share/nbc_define.hpp>
 
 namespace nbc_share
 {
-class EncData;
+class PubKey;
 }
 
 namespace nbc_cs
 {
-
-class Client;
+    
+class Dataset;
     
 /**
- * @brief This class is used to hold the callback parameters for Server#1 on CS.
+ * @brief Provides client.
  */
-struct CallbackParam
+class Client
 {
-    CallbackParam(void);
-    ~CallbackParam(void) = default;
+public:
+    Client(const char* ta_host, const char* ta_port,
+           const bool dl_pubkey = true,
+           const uint32_t retry_interval_usec = NBC_RETRY_INTERVAL_USEC,
+           const uint32_t timeout_sec = NBC_TIMEOUT_SEC);
+    virtual ~Client(void) = default;
 
-    std::string pubkey_filename;
-    std::string context_filename;
-    std::string encdata_filename;
-
-    void set_client(std::shared_ptr<nbc_cs::Client>& client);
-    nbc_cs::Client& get_client(void);
+    const nbc_share::PubKey& pubkey(void) const;
     
-    std::shared_ptr<nbc_share::EncData> encdata_ptr;
+    //int32_t create_session(std::function<void(const int64_t result, void* args)> result_cb, void* args);
+    //
+    //void compute(const int32_t session_id,
+    //             const std::vector<long>& data,
+    //             const size_t class_num);
+    
 private:
     struct Impl;
     std::shared_ptr<Impl> pimpl_;
@@ -53,4 +58,4 @@ private:
 
 } /* namespace nbc_cs */
 
-#endif /* NBC_CS_SHARE_CALLBACK_PARAM_HPP */
+#endif /* NBC_CS_CLIENT_HPP */

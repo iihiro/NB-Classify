@@ -66,6 +66,19 @@ struct SecureKeyFileManager::Impl
         std::ofstream contextfile(filename(kKindContext), std::ios::binary);
         helib::writeContextBaseBinary(contextfile, context);
         helib::writeContextBinary(contextfile, context);
+        contextfile.close();
+
+#if 0
+        {
+            //std::ifstream ifs("hoge.txt", std::ios::binary);
+            std::ifstream ifs("context.txt", std::ios::binary);
+            unsigned long m1, p1, r1;
+            std::vector<long> gens, ords;
+            helib::readContextBaseBinary(ifs, m1, p1, r1, gens, ords);
+            printf("m1:%lu, p1:%lu, r1:%lu\n", m1, p1, r1);
+            exit(1);
+        }
+#endif
         
         std::ofstream pubkeyfile(filename(kKindPubKey), std::ios::binary);
         helib::writePubKeyBinary(pubkeyfile, publicKey);
@@ -106,6 +119,7 @@ struct SecureKeyFileManager::Impl
     std::string filename(const Kind_t kind) const
     {
         return filenames_.at(kind);
+        //return filenames_[kind];
     }
     
 private:
@@ -121,8 +135,8 @@ private:
 };
 
 SecureKeyFileManager::SecureKeyFileManager(const std::string& pubkey_filename,
-                                           const std::string& context_filename,
                                            const std::string& seckey_filename,
+                                           const std::string& context_filename,
                                            const long fheM, const long fheL)
   : pimpl_(new Impl(pubkey_filename,
                     seckey_filename,

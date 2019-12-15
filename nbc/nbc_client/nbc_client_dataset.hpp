@@ -12,13 +12,16 @@ class DataInfo;
     
 class Dataset
 {
-    Dataset(const std::string& info_filename,
-            const std::string& test_filename,
-            const int64_t num_slots);
-    virtual ~Dataset() = default;
+public:
+    Dataset(void);
+    virtual ~Dataset(void) = default;
+
+    void read(const std::string& info_filename,
+              const std::string& test_filename);
 
     const DataInfo& info(void) const;
     const std::vector<std::vector<long>>& data(void) const;
+    //std::vector<std::vector<long>>& data(void);
 
 private:
     struct Impl;

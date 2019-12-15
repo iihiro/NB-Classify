@@ -15,34 +15,29 @@
  * limitations under the License.
  */
 
-#ifndef NBC_ENCDATA_HPP
-#define NBC_ENCDATA_HPP
+#ifndef NBC_CONTEXT_HPP
+#define NBC_CONTEXT_HPP
 
 #include <iostream>
+#include <string>
 #include <memory>
-#include <vector>
 
 namespace helib
 {
-class Ctxt;
+    class FHEcontext;
+    class FHEPubKey;
 }
 
 namespace nbc_share
 {
 
-class PubKey;
-class Context;
-    
 /**
- * @brief This clas is used to hold the encrypted data.
+ * @brief This class is used to hold the context.
  */
-struct EncData
+struct Context
 {
-    EncData(const PubKey& pubkey);
-    ~EncData(void) = default;
-
-    void generate(const std::vector<long>& inputdata,
-                  const Context& context);
+    Context(void);
+    ~Context(void) = default;
 
     void save_to_stream(std::ostream& os) const;
     void load_from_stream(std::istream& is);
@@ -50,12 +45,7 @@ struct EncData
     void save_to_file(const std::string& filepath) const;
     void load_from_file(const std::string& filepath);
     
-    size_t size(void) const;
-
-    const helib::Ctxt& data(void) const;
-    helib::Ctxt& data(void);
-
-    size_t stream_size(void) const;
+    const helib::FHEcontext& get(void) const;
 
 private:
     struct Impl;
@@ -64,4 +54,4 @@ private:
 
 } /* namespace nbc_share */
 
-#endif /* NBC_ENCDATA_HPP */
+#endif /* NBC_CONTEXT_HPP */
