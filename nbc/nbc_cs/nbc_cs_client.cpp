@@ -68,6 +68,11 @@ struct Client::Impl
         return *pubkey_;
     }
 
+    const nbc_share::Context& context(void) const
+    {
+        return *context_;
+    }
+    
     //int32_t create_session(std::function<void(const int64_t result, void* args)> result_cb_func,
     //                       void* result_cb_args)
     //{
@@ -119,6 +124,11 @@ Client::Client(const char* ta_host, const char* ta_port,
 const nbc_share::PubKey& Client::pubkey(void) const
 {
     return pimpl_->pubkey();
+}
+
+const nbc_share::Context& Client::context(void) const
+{
+    return pimpl_->context();
 }
 
 //int32_t Client::create_session(std::function<void(const int64_t result, void* args)> result_cb_func,

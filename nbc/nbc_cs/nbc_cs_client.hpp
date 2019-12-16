@@ -24,6 +24,7 @@
 namespace nbc_share
 {
 class PubKey;
+class Context;
 }
 
 namespace nbc_cs
@@ -43,7 +44,8 @@ public:
            const uint32_t timeout_sec = NBC_TIMEOUT_SEC);
     virtual ~Client(void) = default;
 
-    const nbc_share::PubKey& pubkey(void) const;
+    const nbc_share::PubKey&  pubkey(void)  const;
+    const nbc_share::Context& context(void) const;
     
     //int32_t create_session(std::function<void(const int64_t result, void* args)> result_cb, void* args);
     //

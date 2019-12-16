@@ -88,6 +88,15 @@ struct ModelProvider::Impl
         for (size_t i=0; i<class_num; ++i) {
             
             std::vector<long> tmp = probs[i];
+
+#if 0 // debug
+            printf("probs[%lu] ", i);
+            for (auto& p : tmp) {
+                printf("%ld ", p);
+            }
+            printf("\n");
+#endif
+            
             for (size_t j=0; j<num_data - 1; j++) {
                 // ↓たぶんこれバグじゃない？？ インデックス j でしょ？
                 tmp.insert(tmp.end(), probs[i].begin(), probs[i].end());
@@ -96,10 +105,18 @@ struct ModelProvider::Impl
             //helib::Ctxt ctxt(pubkey);
             //ea.encrypt(ctxt, pubkey, tmp);
 
+#if 0 // debug
+            printf("probs2[%lu] ", i);
+            for (auto& p : tmp) {
+                printf("%ld ", p);
+            }
+            printf("\n");
+#endif
+            
             encdata.push(tmp, context);
         }
 
-        encdata.save_to_file("encdata.txt");
+        encdata.save_to_file("encmodel.txt");
         cs_client_->send_encdata(encdata);
         
         //std::vector<long> inputdata(num_slots);

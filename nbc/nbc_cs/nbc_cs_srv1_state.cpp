@@ -28,6 +28,7 @@ namespace srv1
 struct StateReady::Impl
 {
     Impl(void)
+        : model_received_(false)
     {
     }
 
@@ -36,13 +37,18 @@ struct StateReady::Impl
         STDSC_LOG_TRACE("StateReady: event#%lu", event);
         switch (static_cast<Event_t>(event))
         {
+            case kEventEncModel:
+                model_received_ = true;
+                break;
             case kEventSessionCreate:
-                sc.next_state(StateSessionCreated::create());
+                sc.next_state(StateSessionCreated::create(model_received_));
                 break;
             default:
                 break;
         }
     }
+private:
+    bool model_received_;
 };
 
 struct StateSessionCreated::Impl

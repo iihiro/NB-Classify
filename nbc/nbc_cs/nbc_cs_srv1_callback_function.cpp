@@ -17,6 +17,8 @@
 
 #include <fstream>
 #include <cstring>
+#include <cstdlib>
+#include <ctime>
 #include <stdsc/stdsc_buffer.hpp>
 #include <stdsc/stdsc_socket.hpp>
 #include <stdsc/stdsc_packet.hpp>
@@ -31,6 +33,9 @@
 #include <nbc_cs/nbc_cs_srv1_callback_function.hpp>
 #include <nbc_cs/nbc_cs_client.hpp>
 #include <nbc_cs/nbc_cs_srv1_state.hpp>
+
+#include <helib/FHE.h>
+#include <helib/EncryptedArray.h>
 
 namespace nbc_cs
 {
@@ -130,7 +135,47 @@ DEFUN_REQUEST(CallbackFunctionComputeRequest)
     STDSC_THROW_CALLBACK_IF_CHECK(
         kStateComputable == state.current_state(),
         "Warn: must be Computable state to receive compute request.");
+
+    auto& client = param_.get_client();
+    auto& context = client.context();
     
+    auto  class_num   = param_.permvec.size();
+    auto& ct_data     = param_.encdata_ptr->data();
+    auto& model_ctxts = param_.encmodel_ptr->vdata();
+    auto& permvec     = param_.permvec;
+
+    auto& context_data = context.get();
+    NTL::ZZX G = context_data.alMod.getFactorsOverZZ()[0];
+    helib::EncryptedArray ea(context_data, G);
+
+    std::vector<helib::Ctxt> res_ctxts;
+    for (size_t j=0; j<class_num; ++j) {
+        auto res = model_ctxts[j];
+        res.multiplyBy(ct_data);
+        totalSums(ea, res);
+        res_ctxts.push_back(res);
+    }
+    STDSC_LOG_INFO("Finished calculating probability of each class");
+
+    std::vector<helib::Ctxt> permed;
+    for (size_t j=0; j<permvec.size(); ++j) {
+        permed.push_back(res_ctxts[permvec[j]]);
+    }
+    STDSC_LOG_INFO("Permuted the probability ciphertexts");
+
+    helib::Ctxt max = permed[0];
+
+    std::srand(std::time(nullptr));
+    
+    for (size_t j=1; j<class_num; ++j) {
+        auto coeff = (std::rand() % 100) + 1;
+        auto ct_diff = permed[j];
+        auto tmp = max;
+        ct_diff -= tmp;
+        ct_diff.multByConstant(NTL::to_ZZ(coeff));
+
+        
+    }
 }
 
 } /* namespace srv1 */

@@ -41,8 +41,6 @@ struct EncData
     EncData(const PubKey& pubkey);
     EncData(const PubKey& pubkey,
             const helib::Ctxt& ctxt);
-//    EncData(const PubKey& pubkey,
-//            std::shared_ptr<helib::Ctxt> ctxt_ptr);
     ~EncData(void) = default;
 
     void push(const std::vector<long>& inputdata,
