@@ -68,18 +68,6 @@ struct SecureKeyFileManager::Impl
         helib::writeContextBinary(contextfile, context);
         contextfile.close();
 
-#if 0
-        {
-            //std::ifstream ifs("hoge.txt", std::ios::binary);
-            std::ifstream ifs("context.txt", std::ios::binary);
-            unsigned long m1, p1, r1;
-            std::vector<long> gens, ords;
-            helib::readContextBaseBinary(ifs, m1, p1, r1, gens, ords);
-            printf("m1:%lu, p1:%lu, r1:%lu\n", m1, p1, r1);
-            exit(1);
-        }
-#endif
-        
         std::ofstream pubkeyfile(filename(kKindPubKey), std::ios::binary);
         helib::writePubKeyBinary(pubkeyfile, publicKey);
         pubkeyfile.close();
@@ -107,6 +95,7 @@ struct SecureKeyFileManager::Impl
         else
         {
             ifs.read(reinterpret_cast<char*>(buffer), sz);
+            STDSC_LOG_DEBUG("read %s", filenames_[kind].c_str());
         }
     }
     

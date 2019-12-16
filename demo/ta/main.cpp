@@ -31,9 +31,17 @@
 #include <nbc_ta/nbc_ta_share_callback_param.hpp>
 #include <share/define.hpp>
 
+#define USE_TEST_KEYS
+
+#if !defined(USE_TEST_KEYS)
 static constexpr const char* PUBKEY_FILENAME  = "pubkey.txt";
 static constexpr const char* SECKEY_FILENAME  = "seckey.txt";
 static constexpr const char* CONTEXT_FILENAME = "context.txt";
+#else
+static constexpr const char* PUBKEY_FILENAME  = "../../../testdata/pk_m11119_p2_L180.bin";
+static constexpr const char* SECKEY_FILENAME  = "../../../testdata/sk_m11119_p2_L180.bin";
+static constexpr const char* CONTEXT_FILENAME = "../../../testdata/context_m11119_p2_L180.bin";
+#endif
 static constexpr const char* ENC_RECOMMENDATION_FILENAME =
   "enc_recommendation.txt";
 
@@ -73,6 +81,10 @@ void init(Option& param, int argc, char* argv[])
                 exit(1);
         }
     }
+
+#if defined(USE_TEST_KEYS)
+    param.is_generate_securekey = false;
+#endif
 }
 
 static void exec(const Option& opt)
