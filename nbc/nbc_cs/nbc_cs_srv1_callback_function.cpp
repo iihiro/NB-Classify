@@ -102,6 +102,26 @@ DEFUN_DATA(CallbackFunctionEncInput)
     state.set(kEventEncInput);
 }
 
+// CallbackFunctionPermVec
+DEFUN_DATA(CallbackFunctionPermVec)
+{
+    STDSC_LOG_INFO("Received perm vector. (current state : %lu)",
+                   state.current_state());
+    STDSC_THROW_CALLBACK_IF_CHECK(
+        (kStateSessionCreated == state.current_state() ||
+         kStateComputable     == state.current_state()),
+        "Warn: must be SessionCreated or Computable state to receive encrypting input.");
+
+    auto* p    = static_cast<const uint8_t*>(buffer.data());
+    auto  num  = *reinterpret_cast<const size_t*>(p + 0);
+    auto* data = static_cast<const void*>(p + sizeof(size_t));
+    
+    param_.permvec.resize(num, -1);
+    std::memcpy(param_.permvec.data(), data, sizeof(long) * num);
+
+    state.set(kEventPermVec);
+}
+    
 // CallbackFunctionComputeRequest
 DEFUN_REQUEST(CallbackFunctionComputeRequest)
 {

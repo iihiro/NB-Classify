@@ -79,6 +79,22 @@ struct CSClient::Impl
         stdsc::Buffer* buffer = &buffstream;
         client_.send_data_blocking(nbc_share::kControlCodeDataInput, *buffer);
     }
+
+    void send_permvec(const int32_t session_id, const std::vector<long>& permvec)
+    {
+        auto hdr_sz  = sizeof(size_t);
+        auto data_sz = permvec.size() * sizeof(long);
+        
+        stdsc::Buffer buffer(hdr_sz + data_sz);
+        auto* p = static_cast<uint8_t*>(buffer.data());
+        auto* hdr_p  = reinterpret_cast<size_t*>(p + 0);
+        auto* data_p = static_cast<void*>(p + hdr_sz);
+        
+        *hdr_p = permvec.size();
+        std::memcpy(data_p, permvec.data(), data_sz);
+
+        client_.send_data_blocking(nbc_share::kControlCodeDataPermVec, buffer);
+    }
     
     void send_compute_request(const int32_t session_id)
     {
@@ -116,6 +132,11 @@ int32_t CSClient::send_session_create(void)
 void CSClient::send_encdata(const int32_t session_id, const nbc_share::EncData& encdata)
 {
     pimpl_->send_encdata(session_id, encdata);
+}
+
+void CSClient::send_permvec(const int32_t session_id, const std::vector<long>& permvec)
+{
+    pimpl_->send_permvec(session_id, permvec);
 }
 
 void CSClient::send_compute_request(const int32_t session_id)

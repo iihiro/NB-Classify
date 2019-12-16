@@ -40,26 +40,15 @@ public:
 
     void read(const std::string& filename);
 
-    //const DataInfo& info(void) const;
     const std::vector<std::vector<long>>& data(void) const;
 
+public:
+    static std::vector<long> gen_permvec(const size_t class_num);
+
 private:
-    //struct Impl;
-    //std::shared_ptr<Impl> pimpl_;
     nbc_share::InfoFile info_;
     std::vector<std::vector<long>> data_;
 };
-
-//// 次、↓から
-//// InfoはModelと共通なので、shareに持っていき、
-//// Infoの読み込みは既定クラスで行うようにする
-//struct DataInfo
-//{
-//	int64_t class_num;
-//	int64_t num_features;
-//    std::vector<std::string> class_names;
-//    std::vector<std::vector<std::string>> attr_values;
-//};
 
 } /* namespace nbc_client */
 

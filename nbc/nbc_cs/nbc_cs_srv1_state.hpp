@@ -49,6 +49,7 @@ enum Event_t : uint64_t
     kEventSessionCreate  = 1,
     kEventEncModel       = 2,
     kEventEncInput       = 3,
+    kEventPermVec        = 4,
     kEventComputeRequest = 4,
 };
 
@@ -75,10 +76,12 @@ private:
  */
 struct StateSessionCreated : public stdsc::State
 {
-    static std::shared_ptr<stdsc::State> create(const bool model_received = false,
-                                                const bool input_received = false);
-    StateSessionCreated(const bool model_received = false,
-                        const bool input_received = false);
+    static std::shared_ptr<stdsc::State> create(const bool model_received   = false,
+                                                const bool input_received   = false,
+                                                const bool permvec_received = false);
+    StateSessionCreated(const bool model_received   = false,
+                        const bool input_received   = false,
+                        const bool permvec_received = false);
     virtual void set(stdsc::StateContext &sc, uint64_t event) override;
     virtual uint64_t id(void) const override
     {

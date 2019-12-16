@@ -37,7 +37,7 @@ enum ControlCode_t : uint64_t
     kControlCodeDataInput         = 0x0403,
     kControlCodeDataContext       = 0x0404,
     kControlCodeDataSessionID     = 0x0405,
-    
+    kControlCodeDataPermVec       = 0x0406,
 
     /* Code for Download packet: 0x0801-0x08FF */
     kControlCodeDownloadPubkey    = 0x0801,

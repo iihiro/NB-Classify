@@ -20,19 +20,17 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 #include <nbc_share/nbc_define.hpp>
 
 namespace nbc_share
 {
-    //class PubKey;
     class EncData;
 }
 
 namespace nbc_client
 {
 
-//class Dataset;
-    
 /**
  * @brief Provides client for Server#1 on CS.
  */
@@ -48,6 +46,7 @@ public:
     
     int32_t send_session_create();
     void send_encdata(const int32_t session_id, const nbc_share::EncData& encdata);
+    void send_permvec(const int32_t session_id, const std::vector<long>& permvec);
     void send_compute_request(const int32_t session_id);
 
 private:

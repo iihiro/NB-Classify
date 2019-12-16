@@ -97,45 +97,22 @@ struct Client::Impl
         std::vector<long> inputdata(num_slots);
         std::copy(data.begin(), data.end(), inputdata.begin());
         
-        STDSC_LOG_DEBUG("data.size=%lu, inputdata.size=%lu", data.size(),inputdata.size());
+        STDSC_LOG_DEBUG("data.size=%lu, inputdata.size=%lu", data.size(), inputdata.size());
 
         nbc_share::EncData encdata(pubkey);
         encdata.push(inputdata, context);
         encdata.save_to_file("encdata.txt");
 
+        auto permvec = Dataset::gen_permvec(class_num);
+
         cs_client_->send_encdata(session_id, encdata);
+        cs_client_->send_permvec(session_id, permvec);
         cs_client_->send_compute_request(session_id);
         
         auto& cbfunc = result_cb_.func;
         cbfunc(123, result_cb_.args);
     }
 
-    //void compute(const int32_t session_id,
-    //             const std::vector<long>& data,
-    //             const size_t class_num)
-    //{
-    //    nbc_share::Context context;
-    //    ta_client_->get_context(context);
-    //    
-    //    nbc_share::PubKey pubkey(context.get());
-    //    ta_client_->get_pubkey(pubkey);
-    //
-    //    auto& context_data = context.get();
-    //    const auto num_slots = context_data.zMStar.getNSlots();
-    //    std::vector<long> inputdata(num_slots);
-    //    std::copy(data.begin(), data.end(), inputdata.begin());
-    //    
-    //    STDSC_LOG_DEBUG("data.size=%lu, inputdata.size=%lu", data.size(),inputdata.size());
-    //
-    //    nbc_share::EncData enc_input(pubkey, context);
-    //    enc_input.generate(inputdata);
-    //
-    //    cs_client_->send_enc_input(session_id, enc_input);
-    //    
-    //    auto& cbfunc = result_cb_.func;
-    //    cbfunc(123, result_cb_.args);
-    //}
-    
 private:
     std::shared_ptr<TAClient> ta_client_;
     std::shared_ptr<CSClient> cs_client_;

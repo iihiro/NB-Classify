@@ -19,6 +19,7 @@
 #define NBC_CS_SHARE_CALLBACK_PARAM_HPP
 
 #include <memory>
+#include <vector>
 
 namespace nbc_share
 {
@@ -48,6 +49,7 @@ struct CallbackParam
     
     std::shared_ptr<nbc_share::EncData> encdata_ptr;
     std::shared_ptr<nbc_share::EncData> encmodel_ptr;
+    std::vector<long> permvec;
 private:
     struct Impl;
     std::shared_ptr<Impl> pimpl_;
