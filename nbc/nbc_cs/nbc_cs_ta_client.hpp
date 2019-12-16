@@ -15,42 +15,32 @@
  * limitations under the License.
  */
 
-#ifndef NBC_CLIENT_DATASET_HPP
-#define NBC_CLIENT_DATASET_HPP
+#ifndef NBC_CS_TA_CLIENT_HPP
+#define NBC_CS_TA_CLIENT_HPP
 
+#include <memory>
 #include <string>
-#include <vector>
-//#include <memory>
+#include <nbc_share/nbc_ta_client_base.hpp>
 
-namespace nbc_share
+namespace nbc_cs
 {
-class InfoFile;
-}
-
-namespace nbc_client
-{
-
-//class DataInfo;
     
-class Dataset
+/**
+ * @brief Provides client for Server#1 on TA.
+ */
+class TAClient : public nbc_share::TAClientBase
 {
+    using super = nbc_share::TAClientBase;
+    
 public:
-    Dataset(const nbc_share::InfoFile& info);
-    virtual ~Dataset(void) = default;
-
-    void read(const std::string& filename);
-
-    const std::vector<std::vector<long>>& data(void) const;
-
-public:
-    static std::vector<long> gen_permvec(const size_t class_num);
-    static std::vector<long> read_permvec(const std::string& filename);
+    TAClient(const char* host, const char* port);
+    virtual ~TAClient(void) = default;
 
 private:
-    nbc_share::InfoFile info_;
-    std::vector<std::vector<long>> data_;
+    struct Impl;
+    std::shared_ptr<Impl> pimpl_;
 };
+    
+} /* namespace nbc_cs */
 
-} /* namespace nbc_client */
-
-#endif /* NBC_CLIENT_DATASET_HPP */
+#endif /* NBC_CS_TA_CLIENT_HPP */

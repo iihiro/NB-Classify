@@ -15,42 +15,29 @@
  * limitations under the License.
  */
 
-#ifndef NBC_CLIENT_DATASET_HPP
-#define NBC_CLIENT_DATASET_HPP
+#ifndef NBC_INFOFILE_HPP
+#define NBC_INFOFILE_HPP
 
+#include <cstdint>
 #include <string>
 #include <vector>
-//#include <memory>
 
 namespace nbc_share
 {
-class InfoFile;
-}
 
-namespace nbc_client
+struct InfoFile
 {
-
-//class DataInfo;
-    
-class Dataset
-{
-public:
-    Dataset(const nbc_share::InfoFile& info);
-    virtual ~Dataset(void) = default;
+    InfoFile(void) = default;
+    virtual ~InfoFile(void) = default;
 
     void read(const std::string& filename);
 
-    const std::vector<std::vector<long>>& data(void) const;
-
-public:
-    static std::vector<long> gen_permvec(const size_t class_num);
-    static std::vector<long> read_permvec(const std::string& filename);
-
-private:
-    nbc_share::InfoFile info_;
-    std::vector<std::vector<long>> data_;
+	int64_t class_num;
+	int64_t num_features;
+    std::vector<std::string> class_names;
+    std::vector<std::vector<std::string>> attr_values;
 };
 
-} /* namespace nbc_client */
+} /* namespace nbc_share */
 
-#endif /* NBC_CLIENT_DATASET_HPP */
+#endif /* NBC_INFOFILE_HPP */

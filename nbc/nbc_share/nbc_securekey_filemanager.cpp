@@ -66,7 +66,8 @@ struct SecureKeyFileManager::Impl
         std::ofstream contextfile(filename(kKindContext), std::ios::binary);
         helib::writeContextBaseBinary(contextfile, context);
         helib::writeContextBinary(contextfile, context);
-        
+        contextfile.close();
+
         std::ofstream pubkeyfile(filename(kKindPubKey), std::ios::binary);
         helib::writePubKeyBinary(pubkeyfile, publicKey);
         pubkeyfile.close();
@@ -94,6 +95,7 @@ struct SecureKeyFileManager::Impl
         else
         {
             ifs.read(reinterpret_cast<char*>(buffer), sz);
+            STDSC_LOG_DEBUG("read %s", filenames_[kind].c_str());
         }
     }
     
@@ -106,6 +108,7 @@ struct SecureKeyFileManager::Impl
     std::string filename(const Kind_t kind) const
     {
         return filenames_.at(kind);
+        //return filenames_[kind];
     }
     
 private:
@@ -121,8 +124,8 @@ private:
 };
 
 SecureKeyFileManager::SecureKeyFileManager(const std::string& pubkey_filename,
-                                           const std::string& context_filename,
                                            const std::string& seckey_filename,
+                                           const std::string& context_filename,
                                            const long fheM, const long fheL)
   : pimpl_(new Impl(pubkey_filename,
                     seckey_filename,

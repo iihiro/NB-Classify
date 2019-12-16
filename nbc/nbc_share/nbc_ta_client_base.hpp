@@ -15,45 +15,51 @@
  * limitations under the License.
  */
 
-#ifndef NBC_CLIENT_CS_CLIENT_HPP
-#define NBC_CLIENT_CS_CLIENT_HPP
+#ifndef NBC_TA_CLIENT_BASE_HPP
+#define NBC_TA_CLIENT_BASE_HPP
 
 #include <memory>
 #include <string>
-#include <vector>
 #include <nbc_share/nbc_define.hpp>
+
+namespace stdsc
+{
+    class Client;
+}
 
 namespace nbc_share
 {
-    class EncData;
-}
-
-namespace nbc_client
-{
-
+    
+class PubKey;
+class Context;
+    
 /**
- * @brief Provides client for Server#1 on CS.
+ * @brief Provides client for TA.
  */
-class CSClient
+class TAClientBase
 {
 public:
-    CSClient(const char* host, const char* port);
-    virtual ~CSClient(void) = default;
+    TAClientBase(const char* host, const char* port);
+    virtual ~TAClientBase(void) = default;
 
     void connect(const uint32_t retry_interval_usec = NBC_RETRY_INTERVAL_USEC,
                  const uint32_t timeout_sec = NBC_TIMEOUT_SEC);
     void disconnect();
     
-    int32_t send_session_create();
-    void send_encdata(const int32_t session_id, const nbc_share::EncData& encdata);
-    void send_permvec(const int32_t session_id, const std::vector<long>& permvec);
-    void send_compute_request(const int32_t session_id);
+    void get_pubkey(nbc_share::PubKey& pubkey,
+                    const char* filename = "pubkey.txt");
 
+    void get_context(nbc_share::Context& context,
+                     const char* filename = "context.txt");
+
+protected:
+    stdsc::Client& client(void);
+    
 private:
     struct Impl;
     std::shared_ptr<Impl> pimpl_;
 };
 
-} /* namespace nbc_client */
+} /* namespace nbc_share */
 
-#endif /* NBC_CLIENT_CS_CLIENT_HPP */
+#endif /* NBC_TA_CLIENT_BASE_HPP */

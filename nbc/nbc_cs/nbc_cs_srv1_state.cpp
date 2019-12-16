@@ -28,6 +28,7 @@ namespace srv1
 struct StateReady::Impl
 {
     Impl(void)
+        : model_received_(false)
     {
     }
 
@@ -36,27 +37,35 @@ struct StateReady::Impl
         STDSC_LOG_TRACE("StateReady: event#%lu", event);
         switch (static_cast<Event_t>(event))
         {
+            case kEventEncModel:
+                model_received_ = true;
+                break;
             case kEventSessionCreate:
-                sc.next_state(StateSessionCreated::create());
+                sc.next_state(StateSessionCreated::create(model_received_));
                 break;
             default:
                 break;
         }
     }
+private:
+    bool model_received_;
 };
 
 struct StateSessionCreated::Impl
 {
-    Impl(const bool model_received, const bool input_received)
+    Impl(const bool model_received,
+         const bool input_received,
+         const bool permvec_received)
         : model_received_(model_received),
-          input_received_(input_received)
+          input_received_(input_received),
+          permvec_received_(permvec_received)
     {
     }
 
     void set(stdsc::StateContext& sc, uint64_t event)
     {
-        STDSC_LOG_TRACE("SessionCreated: event#%lu, model:%d, input:5d",
-                        event, model_received_, input_received_);
+        STDSC_LOG_TRACE("SessionCreated: event#%lu, model:%d, input:%d, permvec:%d",
+                        event, model_received_, input_received_, permvec_received_);
         switch (static_cast<Event_t>(event))
         {
             case kEventEncModel:
@@ -65,11 +74,14 @@ struct StateSessionCreated::Impl
             case kEventEncInput:
                 input_received_ = true;
                 break;
+            case kEventPermVec:
+                permvec_received_ = true;
+                break;
             default:
                 break;
         }
 
-        if (model_received_ && input_received_) {
+        if (model_received_ && input_received_ && permvec_received_) {
             sc.next_state(StateComputable::create());
         }
     }
@@ -77,6 +89,7 @@ struct StateSessionCreated::Impl
 private:
     bool model_received_;
     bool input_received_;
+    bool permvec_received_;
 };
 
 struct StateComputable::Impl
@@ -94,7 +107,7 @@ struct StateComputable::Impl
                 sc.next_state(StateComputed::create());
                 break;
             case kEventSessionCreate:
-                sc.next_state(StateSessionCreated::create(true, false));
+                sc.next_state(StateSessionCreated::create(true, false, true));
                 break;
             default:
                 break;
@@ -129,7 +142,7 @@ struct StateComputed::Impl
         switch (static_cast<Event_t>(event))
         {
             case kEventSessionCreate:
-                sc.next_state(StateSessionCreated::create(true, false));
+                sc.next_state(StateSessionCreated::create(true, false, true));
                 break;
             default:
                 break;
@@ -157,15 +170,17 @@ void StateReady::set(stdsc::StateContext& sc, uint64_t event)
 // SessionCreated
 
 std::shared_ptr<stdsc::State> StateSessionCreated::create(const bool model_received,
-                                                          const bool input_received)
+                                                          const bool input_received,
+                                                          const bool permvec_received)
 {
     return std::shared_ptr<stdsc::State>(
-        new StateSessionCreated(model_received, input_received));
+        new StateSessionCreated(model_received, input_received, permvec_received));
 }
 
 StateSessionCreated::StateSessionCreated(const bool model_received,
-                                         const bool input_received)
-  : pimpl_(new Impl(model_received, input_received))
+                                         const bool input_received,
+                                         const bool permvec_received)
+    : pimpl_(new Impl(model_received, input_received, permvec_received))
 {
 }
 

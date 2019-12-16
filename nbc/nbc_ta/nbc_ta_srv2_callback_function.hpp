@@ -15,8 +15,8 @@
  * limitations under the License.
  */
 
-#ifndef NBC_TA_SRV1_CALLBACK_FUNCTION_HPP
-#define NBC_TA_SRV1_CALLBACK_FUNCTION_HPP
+#ifndef NBC_TA_SRV2_CALLBACK_FUNCTION_HPP
+#define NBC_TA_SRV2_CALLBACK_FUNCTION_HPP
 
 #include <stdsc/stdsc_callback_function.hpp>
 
@@ -27,27 +27,17 @@ struct CallbackParam;
 
 namespace nbc_ta
 {
-namespace srv1
+namespace srv2
 {
 
 using CallbackParam = nbc_ta::CallbackParam;
 
 /**
- * @brief Provides callback function in receiving pubic key request.
+ * @brief Provides callback function in receiving begin computing.
  */
-DECLARE_DOWNLOAD_CLASS(CallbackFunctionPubkeyRequest);
+DECLARE_DATA_CLASS(CallbackFunctionBeginComputing);
 
-/**
- * @brief Provides callback function in receiving context request.
- */
-DECLARE_DOWNLOAD_CLASS(CallbackFunctionContextRequest);
-
-/**
- * @brief Provides callback function in receiving result request.
- */
-DECLARE_DOWNLOAD_CLASS(CallbackFunctionResultRequest);
-
-} /* namespace srv1 */
+} /* namespace srv2 */
 } /* namespace nbc_ta */
 
-#endif /* NBC_TA_SRV1_CALLBACK_FUNCTION_HPP */
+#endif /* NBC_TA_SRV2_CALLBACK_FUNCTION_HPP */

@@ -1,47 +1,18 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <numeric>
+#include <random>
+#include <algorithm>
 #include <stdsc/stdsc_log.hpp>
+#include <stdsc/stdsc_exception.hpp>
+#include <nbc_share/nbc_infofile.hpp>
 #include <nbc_client/nbc_client_dataset.hpp>
 
 namespace nbc_client
 {
 
-DataInfo readInfo(const std::string& filename)
-{
-    DataInfo info;
-
-    std::ifstream infile(filename);
-    std::string line;
-    int count = 0;
-    info.num_features = 0;
-
-    while (std::getline(infile, line)) {
-        std::stringstream ss(line);
-
-        if (count == 0) {
-            count++;
-            while (ss.good()) {
-                std::string substr;
-                std::getline(ss, substr, ',');
-                info.class_names.push_back(substr);
-            }
-        } else {
-            std::vector<std::string> temp;
-            while (ss.good()) {
-                std::string substr;
-                std::getline(ss, substr, ',');
-                temp.push_back(substr);
-            }
-            info.num_features += temp.size();
-            info.attr_values.push_back(temp);
-        }
-    }
-    info.class_num = info.class_names.size();
-
-    return info;
-}
-
+static
 std::vector<std::vector<std::string>> readData(const std::string& filename)
 {
     std::vector<std::vector<std::string>> data;
@@ -64,6 +35,8 @@ std::vector<std::vector<std::string>> readData(const std::string& filename)
     return data;
 }
 
+#if !defined(NDEBUG)
+static
 void printData(const std::vector<std::vector<std::string>>& data) {
     std::cout << "Printing test data" << std::endl;
     for(size_t i=0; i<data.size(); i++) {
@@ -74,7 +47,9 @@ void printData(const std::vector<std::vector<std::string>>& data) {
         std::cout << std::endl;
     }
 }
+#endif /*if !defined(NDEBUG)*/
 
+static
 std::vector<long> parseData(const std::vector<std::string>& sample,
                             const std::vector<std::vector<std::string>>& attr_values)
 {
@@ -92,6 +67,8 @@ std::vector<long> parseData(const std::vector<std::string>& sample,
     return parsed;
 }
 
+#if !defined(NDEBUG)
+static    
 void printParsedData(const std::vector<long>& parsed)
 {
     for (size_t i=0; i<parsed.size(); i++) {
@@ -99,63 +76,74 @@ void printParsedData(const std::vector<long>& parsed)
     }
     std::cout << std::endl;
 }
-    
-struct Dataset::Impl
-{
-    Impl(const std::string& info_filename,
-         const std::string& test_filename,
-         const int64_t num_slots)
-        : info_()
-    {
-        info_ = readInfo(info_filename);
-        STDSC_LOG_TRACE("read info from %s. (nclass: %ld)",
-                        info_filename.c_str(),
-                        info_.class_num);
+#endif /* if !defined(NDEBUG) */
 
-        auto orig_data = readData(test_filename);
-        STDSC_LOG_TRACE("read test data from %s.",
-                        test_filename.c_str());
-        for (const auto& d : orig_data) {
-            std::vector<long> tmp = {1};
-            auto tmp2 = parseData(d, info_.attr_values);
-            tmp.insert(tmp.end(), tmp2.begin(), tmp2.end());
-            tmp.resize(num_slots);
-            data_.push_back(tmp);
+static
+std::vector<long> genPermVec(int n)
+{
+    std::vector<long> perm_vec(n);
+    std::iota(perm_vec.begin(), perm_vec.end(), 0);
+
+    std::random_device seed_gen;
+    std::mt19937 engine(seed_gen());
+    std::shuffle(perm_vec.begin(), perm_vec.end(), engine);
+    
+    return perm_vec;
+}
+
+std::vector<long> readPermVec(const std::string& filename)
+{
+    std::vector<long> perm_vec;
+    std::ifstream infile(filename);
+    std::string line;
+
+    while (std::getline(infile, line)) {
+        std::stringstream ss(line);
+        int num;
+
+        while (ss >> num){
+            perm_vec.push_back(num);
+            if (ss.peek()== ',') {
+                ss.ignore();
+            }
         }
     }
+    return perm_vec;
+}
 
-    ~Impl()
-    {}
-
-    const DataInfo& info(void) const
-    {
-        return info_;
-    }
     
-    const std::vector<std::vector<long>>& data(void) const
-    {
-        return data_;
-    }
-
-private:
-    DataInfo info_;
-    std::vector<std::vector<long>> data_;
-};
-
-Dataset::Dataset(const std::string& info_filename,
-                 const std::string& test_filename,
-                 const int64_t num_slots)
-    : pimpl_(new Impl(info_filename, test_filename, num_slots))
+Dataset::Dataset(const nbc_share::InfoFile& info)
+    : info_(info)
 {}
 
-const DataInfo& Dataset::info(void) const
+void Dataset::read(const std::string& filename)
 {
-    return pimpl_->info();
+    auto orig_data = readData(filename);
+    STDSC_LOG_TRACE("read test data from %s.",
+                    filename.c_str());
+    
+    data_.clear();
+    for (const auto& d : orig_data) {
+        std::vector<long> tmp = {1};
+        auto tmp2 = parseData(d, info_.attr_values);
+        tmp.insert(tmp.end(), tmp2.begin(), tmp2.end());
+        data_.push_back(tmp);
+    }
 }
     
 const std::vector<std::vector<long>>& Dataset::data(void) const
 {
-    return pimpl_->data();
+    return data_;
+}
+
+std::vector<long> Dataset::gen_permvec(const size_t class_num)
+{
+    return genPermVec(static_cast<int>(class_num));
+}
+
+std::vector<long> Dataset::read_permvec(const std::string& filename)
+{
+    return readPermVec(filename);
 }
 
 

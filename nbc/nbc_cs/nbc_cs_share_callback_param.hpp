@@ -19,6 +19,7 @@
 #define NBC_CS_SHARE_CALLBACK_PARAM_HPP
 
 #include <memory>
+#include <vector>
 
 namespace nbc_share
 {
@@ -28,6 +29,8 @@ class EncData;
 namespace nbc_cs
 {
 
+class Client;
+    
 /**
  * @brief This class is used to hold the callback parameters for Server#1 on CS.
  */
@@ -37,9 +40,16 @@ struct CallbackParam
     ~CallbackParam(void) = default;
 
     std::string pubkey_filename;
-    std::string enc_input_filename;
+    std::string context_filename;
+    std::string encdata_filename;
+    std::string encmodel_filename;
 
-    std::shared_ptr<nbc_share::EncData> enc_input_ptr;
+    void set_client(std::shared_ptr<nbc_cs::Client>& client);
+    nbc_cs::Client& get_client(void);
+    
+    std::shared_ptr<nbc_share::EncData> encdata_ptr;
+    std::shared_ptr<nbc_share::EncData> encmodel_ptr;
+    std::vector<long> permvec;
 private:
     struct Impl;
     std::shared_ptr<Impl> pimpl_;

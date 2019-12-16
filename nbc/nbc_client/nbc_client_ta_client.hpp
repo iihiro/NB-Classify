@@ -19,44 +19,30 @@
 #define NBC_CLIENT_TA_CLIENT_HPP
 
 #include <memory>
-#include <vector>
 #include <string>
-#include <stdsc/stdsc_thread.hpp>
+#include <nbc_share/nbc_ta_client_base.hpp>
 
 namespace nbc_client
 {
-class TAParam;
-
+    
 /**
  * @brief Provides client for Server#1 on TA.
  */
-template <class T = TAParam>
-class TAClient : public stdsc::Thread<T>
+class TAClient : public nbc_share::TAClientBase
 {
-    using super = stdsc::Thread<T>;
-
+    using super = nbc_share::TAClientBase;
+    
 public:
     TAClient(const char* host, const char* port);
-    virtual ~TAClient(void);
-
-    void start(T& param);
-    void wait(void);
+    virtual ~TAClient(void) = default;
 
     void get_result(int64_t& resutl);
 
 private:
-    virtual void exec(T& args,
-                      std::shared_ptr<stdsc::ThreadException> te) const;
-
     struct Impl;
     std::shared_ptr<Impl> pimpl_;
 };
-
-struct TAParam
-{
-    std::string pubkey_filename = "pukey.txt";
-};
-
+    
 } /* namespace nbc_client */
 
 #endif /* NBC_CLIENT_TA_CLIENT_HPP */

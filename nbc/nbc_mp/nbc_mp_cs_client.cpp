@@ -28,9 +28,9 @@
 #include <nbc_share/nbc_define.hpp>
 #include <nbc_share/nbc_pubkey.hpp>
 #include <nbc_share/nbc_encdata.hpp>
-#include <nbc_client/nbc_client_cs_client.hpp>
+#include <nbc_mp/nbc_mp_cs_client.hpp>
 
-namespace nbc_client
+namespace nbc_mp
 {
     
 struct CSClient::Impl
@@ -58,18 +58,7 @@ struct CSClient::Impl
         client_.close();
     }
     
-    int32_t send_session_create()
-    {
-        STDSC_LOG_INFO("Requesting session create.");
-
-        stdsc::Buffer buffer;
-        client_.recv_data_blocking(nbc_share::kControlCodeDownloadSessionID, buffer);
-        const int32_t session_id = *reinterpret_cast<int32_t*>(buffer.data());
-        STDSC_LOG_INFO("Sending session id. (id: %d)", session_id);
-        return session_id;
-    }
-    
-    void send_encdata(const int32_t session_id, const nbc_share::EncData& encdata)
+    void send_encdata(const nbc_share::EncData& encdata)
     {
         stdsc::BufferStream buffstream(encdata.stream_size());
         std::iostream stream(&buffstream);
@@ -77,34 +66,9 @@ struct CSClient::Impl
 
         STDSC_LOG_INFO("Sending encrypted input.");
         stdsc::Buffer* buffer = &buffstream;
-        client_.send_data_blocking(nbc_share::kControlCodeDataInput, *buffer);
-    }
-
-    void send_permvec(const int32_t session_id, const std::vector<long>& permvec)
-    {
-        auto hdr_sz  = sizeof(size_t);
-        auto data_sz = permvec.size() * sizeof(long);
-        
-        stdsc::Buffer buffer(hdr_sz + data_sz);
-        auto* p = static_cast<uint8_t*>(buffer.data());
-        auto* hdr_p  = reinterpret_cast<size_t*>(p + 0);
-        auto* data_p = static_cast<void*>(p + hdr_sz);
-        
-        *hdr_p = permvec.size();
-        std::memcpy(data_p, permvec.data(), data_sz);
-
-        client_.send_data_blocking(nbc_share::kControlCodeDataPermVec, buffer);
+        client_.send_data_blocking(nbc_share::kControlCodeDataModel, *buffer);
     }
     
-    void send_compute_request(const int32_t session_id)
-    {
-        STDSC_LOG_INFO("Requesting compute.");
-        stdsc::Buffer buffer(sizeof(session_id));
-        std::memcpy(buffer.data(), static_cast<const void*>(&session_id),
-                    sizeof(session_id));
-        client_.send_data_blocking(nbc_share::kControlCodeDataCompute, buffer);
-    }
-
 private:
     const char* host_;
     const char* port_;    
@@ -127,24 +91,9 @@ void CSClient::disconnect(void)
     pimpl_->disconnect();
 }
     
-int32_t CSClient::send_session_create(void)
+void CSClient::send_encdata(const nbc_share::EncData& encdata)
 {
-    return pimpl_->send_session_create();
+    pimpl_->send_encdata(encdata);
 }
 
-void CSClient::send_encdata(const int32_t session_id, const nbc_share::EncData& encdata)
-{
-    pimpl_->send_encdata(session_id, encdata);
-}
-
-void CSClient::send_permvec(const int32_t session_id, const std::vector<long>& permvec)
-{
-    pimpl_->send_permvec(session_id, permvec);
-}
-
-void CSClient::send_compute_request(const int32_t session_id)
-{
-    pimpl_->send_compute_request(session_id);
-}
-
-} /* namespace nbc_client */
+} /* namespace nbc_mp */

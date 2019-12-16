@@ -1,6 +1,9 @@
 #include <vector>
+#include <stdsc/stdsc_exception.hpp>
 #include <nbc_share/nbc_utility.hpp>
 #include <nbc_share/nbc_encdata.hpp>
+#include <nbc_share/nbc_pubkey.hpp>
+#include <nbc_share/nbc_context.hpp>
 
 #include <helib/FHE.h>
 #include <helib/EncryptedArray.h>
@@ -10,92 +13,157 @@ namespace nbc_share
 
 struct EncData::Impl
 {
-    Impl() : size_()
+    Impl(const PubKey& pubkey)
+        : pubkey_(pubkey)
     {
     }
 
-    void generate(const std::vector<long>& inputdata,
-                  const std::string& pubkey_filename)
+    Impl(const PubKey& pubkey,
+         const helib::Ctxt& ctxt)
+        : pubkey_(pubkey)
     {
-        //unsigned long m, p, r;
-        //std::vector<long> gens, ords;
-        //std::ifstream ct(pubkey_filename);
-        //helib::readContextBase(ct, m, p, r, gens, ords);
-        //helib::FHEcontext context(m, p, r, gens, ords);
-        //ct >> context;
-        //helib::FHEPubKey publicKey(context);
-        //ct >> publicKey;
-        //ct.close();
-        std::shared_ptr<helib::FHEcontext> context_ptr;
-        std::shared_ptr<helib::FHEPubKey>  pubkey_ptr;
-        read_context_and_pubkey(pubkey_filename,
-                                context_ptr, pubkey_ptr);
-        auto& context = *context_ptr;
-        auto& pubkey  = *pubkey_ptr;
+        //ctxt_ptr_ = std::make_shared<helib::Ctxt>(pubkey_.get());
+        //*ctxt_ptr_ = ctxt;
+        vctxt_.push_back(ctxt);
+    }
+    
+    //Impl(const PubKey& pubkey,
+    //     std::shared_ptr<helib::Ctxt> ctxt_ptr)
+    //    : pubkey_(pubkey),
+    //      size_(),
+    //      ctxt_ptr_(ctxt_ptr)
+    //{
+    //}
 
-        NTL::ZZX G = context.alMod.getFactorsOverZZ()[0];
-        helib::EncryptedArray ea(context, G);
+    void push(const std::vector<long>& inputdata,
+              const Context& context)
+    {
+        auto& context_data = context.get();
+        auto& pubkey_data  = pubkey_.get();
 
-        std::shared_ptr<helib::Ctxt> encdata_ptr(new helib::Ctxt(pubkey));
-        auto& ctxt = *encdata_ptr;
-        ea.encrypt(ctxt, pubkey, inputdata);
-
-        ctxt_ptr_ = encdata_ptr;
-        size_     = inputdata.size();
+        NTL::ZZX G = context_data.alMod.getFactorsOverZZ()[0];
+        helib::EncryptedArray ea(context_data, G);
+        
+        //std::shared_ptr<helib::Ctxt> encdata_ptr(new helib::Ctxt(pubkey_data));
+        //auto& ctxt = *encdata_ptr;
+        helib::Ctxt ctxt(pubkey_data);
+        ea.encrypt(ctxt, pubkey_data, inputdata);
+        
+        //ctxt_ptr_ = encdata_ptr;
+        vctxt_.push_back(ctxt);
+        //size_     = inputdata.size();
     }
 
+    void push(const helib::Ctxt& ctxt)
+    {
+        vctxt_.push_back(ctxt);
+    }
+
+    void clear(void)
+    {
+        vctxt_.clear();
+    }
+    
     void save_to_stream(std::ostream& os) const
     {
-        if (ctxt_ptr_)
-        {
-            os << size_ << std::endl;
-
-            auto& ctxt = *ctxt_ptr_;
+        //if (ctxt_ptr_)
+        //{
+        //    os << size_ << std::endl;
+        //
+        //    auto& ctxt = *ctxt_ptr_;
+        //    os << ctxt << std::endl;
+        //}
+        if (vctxt_.size() == 0) {
+            return;
+        }
+        
+        os << vctxt_.size() << std::endl;
+        for (const auto& ctxt : vctxt_) {
             os << ctxt << std::endl;
         }
     }
 
-    void load_from_stream(std::istream& is, const std::string& pubkey_filename)
+    void load_from_stream(std::istream& is)
     {
-        is >> size_;
+        //is >> size_;
+        //
+        //auto& pubkey  = pubkey_.get();
+        //std::shared_ptr<helib::Ctxt> ctxt_ptr(new helib::Ctxt(pubkey));
+        //auto& ctxt = *ctxt_ptr;
+        //is >> ctxt;
+        //
+        //ctxt_ptr_ = ctxt_ptr;
 
-        //unsigned long m, p, r;
-        //std::vector<long> gens, ords;
-        //std::ifstream ct(pubkey_filename);
-        //::readContextBase(ct, m, p, r, gens, ords);
-        //::FHEcontext context(m, p, r, gens, ords);
-        //ct >> context;
-        //::FHEPubKey publicKey(context);
-        //ct >> publicKey;
-        //ct.close();
-        std::shared_ptr<helib::FHEcontext> context_ptr;
-        std::shared_ptr<helib::FHEPubKey>  pubkey_ptr;
-        read_context_and_pubkey(pubkey_filename,
-                                context_ptr, pubkey_ptr);
-        auto& pubkey  = *pubkey_ptr;
+        size_t vsize;
+        is >> vsize;
 
-        std::shared_ptr<helib::Ctxt> ctxt_ptr(new helib::Ctxt(pubkey));
-        auto& ctxt = *ctxt_ptr;
-        is >> ctxt;
+        clear();
 
-        ctxt_ptr_ = ctxt_ptr;
+        for (size_t i=0; i<vsize; ++i) {
+            helib::Ctxt ctxt(pubkey_.get());
+            is >> ctxt;
+            vctxt_.push_back(ctxt);
+        }
     }
 
-    size_t size(void) const
+    void save_to_file(const std::string& filepath) const
     {
-        return size_;
+        std::ofstream ofs(filepath, std::ios::binary);
+        save_to_stream(ofs);
+        ofs.close();
     }
+    
+    void load_from_file(const std::string& filepath)
+    {
+        if (!nbc_share::utility::file_exist(filepath)) {
+            std::ostringstream oss;
+            oss << "File not found. (" << filepath << ")";
+            STDSC_THROW_FILE(oss.str());
+        }
+        std::ifstream ifs(filepath, std::ios::binary);
+        load_from_stream(ifs);
+        ifs.close();
+    }
+    
+    //size_t size(void) const
+    //{
+    //    return size_;
+    //}
+
+    //const helib::Ctxt& data(void) const
+    //{
+    //    return *ctxt_ptr_;
+    //}
+    //
+    //helib::Ctxt& data(void)
+    //{
+    //    return *ctxt_ptr_;
+    //}
 
     const helib::Ctxt& data(void) const
     {
-        return *ctxt_ptr_;
+        STDSC_THROW_FAILURE_IF_CHECK(vctxt_.size() > 0, "Data is empty.");
+        return vctxt_[0];
     }
-
+    
     helib::Ctxt& data(void)
     {
-        return *ctxt_ptr_;
+        STDSC_THROW_FAILURE_IF_CHECK(vctxt_.size() > 0, "Data is empty.");
+        return vctxt_[0];
     }
 
+    const std::vector<helib::Ctxt>& vdata(void) const
+    {
+        STDSC_THROW_FAILURE_IF_CHECK(vctxt_.size() > 0, "Data is empty.");
+        return vctxt_;
+    }
+    
+    std::vector<helib::Ctxt>& vdata(void)
+    {
+        STDSC_THROW_FAILURE_IF_CHECK(vctxt_.size() > 0, "Data is empty.");
+        return vctxt_;
+    }
+    
     size_t stream_size(void) const
     {
         std::ostringstream oss;
@@ -104,43 +172,43 @@ struct EncData::Impl
     }
     
 private:
-    void read_context_and_pubkey(const std::string& pubkey_filename,
-                                 std::shared_ptr<helib::FHEcontext>& context,
-                                 std::shared_ptr<helib::FHEPubKey>& pubkey)
-    {
-        unsigned long m, p, r;
-        std::vector<long> gens, ords;
-        std::ifstream ct(pubkey_filename);
-        helib::readContextBase(ct, m, p, r, gens, ords);
-        
-        std::shared_ptr<helib::FHEcontext> context_ptr(
-            new helib::FHEcontext(m, p, r, gens, ords));
-        ct >> *context_ptr;
-        
-        std::shared_ptr<helib::FHEPubKey> pubkey_ptr(
-            new helib::FHEPubKey(*context_ptr));
-        ct >> *pubkey_ptr;
-        
-        ct.close();
-
-        context = context_ptr;
-        pubkey  = pubkey_ptr;
-    }
-
-    
-private:
-    std::shared_ptr<helib::Ctxt> ctxt_ptr_;
-    size_t size_;
+    const PubKey&  pubkey_;
+    //size_t size_;
+    //std::shared_ptr<helib::Ctxt> ctxt_ptr_;
+    std::vector<helib::Ctxt> vctxt_;
 };
 
-EncData::EncData(void) : pimpl_(new Impl())
+EncData::EncData(const PubKey& pubkey)
+    : pimpl_(new Impl(pubkey))
 {
 }
 
-void EncData::generate(const std::vector<long>& inputdata,
-                       const std::string& pubkey_filename)
+EncData::EncData(const PubKey& pubkey,
+                 const helib::Ctxt& ctxt)
+    : pimpl_(new Impl(pubkey))
 {
-    pimpl_->generate(inputdata, pubkey_filename);
+}
+
+//EncData::EncData(const PubKey& pubkey,
+//                 std::shared_ptr<helib::Ctxt> ctxt_ptr)
+//    : pimpl_(new Impl(pubkey, ctxt_ptr))
+//{
+//}
+
+void EncData::push(const std::vector<long>& inputdata,
+                   const Context& context)
+{
+    pimpl_->push(inputdata, context);
+}
+
+void EncData::push(const helib::Ctxt& ctxt)
+{
+    pimpl_->push(ctxt);
+}
+
+void EncData::clear()
+{
+    pimpl_->clear();
 }
 
 void EncData::save_to_stream(std::ostream& os) const
@@ -148,16 +216,25 @@ void EncData::save_to_stream(std::ostream& os) const
     pimpl_->save_to_stream(os);
 }
 
-void EncData::load_from_stream(std::istream& is,
-                                     const std::string& pubkey_filename)
+void EncData::load_from_stream(std::istream& is)
 {
-    pimpl_->load_from_stream(is, pubkey_filename);
+    pimpl_->load_from_stream(is);
 }
 
-size_t EncData::size(void) const
+void EncData::save_to_file(const std::string& filepath) const
 {
-    return pimpl_->size();
+    pimpl_->save_to_file(filepath);
 }
+    
+void EncData::load_from_file(const std::string& filepath)
+{
+    pimpl_->load_from_file(filepath);
+}
+    
+//size_t EncData::size(void) const
+//{
+//    return pimpl_->size();
+//}
 
 const helib::Ctxt& EncData::data(void) const
 {
@@ -169,6 +246,16 @@ helib::Ctxt& EncData::data(void)
     return pimpl_->data();
 }
 
+const std::vector<helib::Ctxt>& EncData::vdata(void) const
+{
+    return pimpl_->vdata();
+}
+
+std::vector<helib::Ctxt>& EncData::vdata(void)
+{
+    return pimpl_->vdata();
+}
+    
 size_t EncData::stream_size(void) const
 {
     return pimpl_->stream_size();

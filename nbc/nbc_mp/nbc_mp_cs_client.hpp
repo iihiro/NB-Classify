@@ -15,12 +15,11 @@
  * limitations under the License.
  */
 
-#ifndef NBC_CLIENT_CS_CLIENT_HPP
-#define NBC_CLIENT_CS_CLIENT_HPP
+#ifndef NBC_MP_CS_CLIENT_HPP
+#define NBC_MP_CS_CLIENT_HPP
 
 #include <memory>
 #include <string>
-#include <vector>
 #include <nbc_share/nbc_define.hpp>
 
 namespace nbc_share
@@ -28,9 +27,11 @@ namespace nbc_share
     class EncData;
 }
 
-namespace nbc_client
+namespace nbc_mp
 {
 
+//class Dataset;
+    
 /**
  * @brief Provides client for Server#1 on CS.
  */
@@ -44,16 +45,13 @@ public:
                  const uint32_t timeout_sec = NBC_TIMEOUT_SEC);
     void disconnect();
     
-    int32_t send_session_create();
-    void send_encdata(const int32_t session_id, const nbc_share::EncData& encdata);
-    void send_permvec(const int32_t session_id, const std::vector<long>& permvec);
-    void send_compute_request(const int32_t session_id);
+    void send_encdata(const nbc_share::EncData& encdata);
 
 private:
     struct Impl;
     std::shared_ptr<Impl> pimpl_;
 };
 
-} /* namespace nbc_client */
+} /* namespace nbc_mp */
 
-#endif /* NBC_CLIENT_CS_CLIENT_HPP */
+#endif /* NBC_MP_CS_CLIENT_HPP */

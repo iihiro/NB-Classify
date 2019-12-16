@@ -43,9 +43,10 @@ enum StateId_t : uint64_t
  */
 enum Event_t : uint64_t
 {
-    kEventNil           = 0,
-    kEventPubkeyRequest = 1,
-    kEventResultRequest = 2,
+    kEventNil            = 0,
+    kEventPubkeyRequest  = 1,
+    kEventResultRequest  = 2,
+    kEventContextRequest = 3,
 };
 
 /**

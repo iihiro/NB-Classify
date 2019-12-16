@@ -22,18 +22,19 @@
 #include <stdsc/stdsc_exception.hpp>
 #include <nbc_share/nbc_pubkey.hpp>
 #include <nbc_share/nbc_infofile.hpp>
-#include <nbc_client/nbc_client.hpp>
-#include <nbc_client/nbc_client_dataset.hpp>
+#include <nbc_mp/nbc_mp.hpp>
+#include <nbc_mp/nbc_mp_model.hpp>
+#include <nbc_mp/nbc_mp.hpp>
 #include <share/define.hpp>
 
 static constexpr const char* INFO_FILENAME   = "../../../datasets/sample_info.csv";
-static constexpr const char* TEST_FILENAME   = "../../../datasets/sample_test.csv";
+static constexpr const char* MODEL_FILENAME  = "../../../datasets/sample_model.csv";
 static constexpr const char* PUBKEY_FILENAME = "pubkey.txt";
 
 struct Option
 {
     std::string info_filename;
-    std::string test_filename;
+    std::string model_filename;
 };
 
 void init(Option& option, int argc, char* argv[])
@@ -47,8 +48,8 @@ void init(Option& option, int argc, char* argv[])
             case 'i':
                 option.info_filename = optarg;
                 break;
-            case 't':
-                option.test_filename = optarg;
+            case 'm':
+                option.model_filename = optarg;
                 break;
             case 'h':
             default:
@@ -58,42 +59,19 @@ void init(Option& option, int argc, char* argv[])
     }
 }
 
-struct ResultParam
-{
-    int64_t index;
-};
-
-void result_cb(const int64_t result, void* args)
-{
-    auto* param = static_cast<ResultParam*>(args);
-    param->index = result;
-}
-
 void exec(Option& option)
 {
     const char* host   = "localhost";
-    ResultParam args   = {0};
-    int32_t session_id = -1;
 
-    nbc_client::Client client(host, PORT_TA_SRV1,
-                              host, PORT_CS_SRV1);
+    nbc_mp::ModelProvider mp(host, PORT_TA_SRV1, host, PORT_CS_SRV1);
 
     nbc_share::InfoFile info;
     info.read(INFO_FILENAME);
     
-    nbc_client::Dataset dataset(info);
-    dataset.read(TEST_FILENAME);
-    
-    session_id = client.create_session(result_cb, &args);
-    std::cout << "session_id: " << session_id << std::endl;
+    nbc_mp::Model model(info);
+    model.read(MODEL_FILENAME);
 
-    int debug = 1;
-    for (const auto& data : dataset.data()) {
-        client.compute(session_id, data, info.class_num);
-        if (debug) break;
-    }
-    
-    std::cout << "result: " << args.index << std::endl;
+    mp.send_encmodel(model.probs(), info.num_features, model.class_num());
 }
 
 int main(int argc, char* argv[])
@@ -103,7 +81,7 @@ int main(int argc, char* argv[])
     {
         Option option;
         init(option, argc, argv);
-        STDSC_LOG_INFO("Launched Client demo app");
+        STDSC_LOG_INFO("Launched ModelProvider demo app");
         exec(option);
     }
     catch (stdsc::AbstractException& e)

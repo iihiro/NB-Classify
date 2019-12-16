@@ -17,6 +17,7 @@
 
 #include <stdsc/stdsc_exception.hpp>
 #include <stdsc/stdsc_buffer.hpp>
+#include <nbc_cs/nbc_cs_client.hpp>
 #include <nbc_cs/nbc_cs_share_callback_param.hpp>
 
 namespace nbc_cs
@@ -26,10 +27,35 @@ struct CallbackParam::Impl
 {
     Impl(void) = default;
     ~Impl(void) = default;
+
+    void set_client(std::shared_ptr<nbc_cs::Client>& client)
+    {
+        client_ = client;
+    }
+    
+    nbc_cs::Client& get_client(void)
+    {
+        STDSC_THROW_FAILURE_IF_CHECK(client_,
+                                     "Err: Client is not set.");
+        return *client_;
+    }
+    
+private:
+    std::shared_ptr<nbc_cs::Client> client_;
 };
 
-CallbackParam::CallbackParam(void) : pimpl_(new Impl())
+CallbackParam::CallbackParam(void)
+    : pimpl_(new Impl())
+{}
+
+void CallbackParam::set_client(std::shared_ptr<nbc_cs::Client>& client)
 {
+    pimpl_->set_client(client);
+}
+    
+nbc_cs::Client& CallbackParam::get_client(void)
+{
+    return pimpl_->get_client();
 }
 
 } /* namespace nbc_cs */

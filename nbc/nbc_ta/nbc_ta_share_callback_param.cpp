@@ -25,6 +25,13 @@
 namespace nbc_ta
 {
 
+// 次、これをunorderd_mapのvalueのint64_tと置き換えるところから
+struct SessionContext
+{
+    int64_t result_index;
+    int32_t class_num;
+};
+
 struct CallbackParam::Impl
 {
     Impl(void) = default;

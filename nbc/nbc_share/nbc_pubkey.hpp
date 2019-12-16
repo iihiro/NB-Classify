@@ -32,11 +32,11 @@ namespace nbc_share
 {
 
 /**
- * @brief This clas is used to hold the public key.
+ * @brief This class is used to hold the public key.
  */
 struct PubKey
 {
-    PubKey(void);
+    PubKey(const helib::FHEcontext& context);
     ~PubKey(void) = default;
 
     void save_to_stream(std::ostream& os) const;
@@ -45,8 +45,7 @@ struct PubKey
     void save_to_file(const std::string& filepath) const;
     void load_from_file(const std::string& filepath);
     
-    const helib::FHEcontext& context(void) const;
-    const helib::FHEPubKey&  pubkey(void) const;
+    const helib::FHEPubKey& get(void) const;
 
 private:
     struct Impl;

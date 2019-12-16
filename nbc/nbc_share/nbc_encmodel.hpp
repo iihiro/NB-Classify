@@ -15,8 +15,8 @@
  * limitations under the License.
  */
 
-#ifndef NBC_ENCDATA_HPP
-#define NBC_ENCDATA_HPP
+#ifndef NBC_ENCMODEL_HPP
+#define NBC_ENCMODEL_HPP
 
 #include <iostream>
 #include <memory>
@@ -34,21 +34,15 @@ class PubKey;
 class Context;
     
 /**
- * @brief This clas is used to hold the encrypted data.
+ * @brief This clas is used to hold the encrypted model.
  */
-struct EncData
+struct EncModel
 {
-    EncData(const PubKey& pubkey);
-    EncData(const PubKey& pubkey,
-            const helib::Ctxt& ctxt);
-    ~EncData(void) = default;
+    EncModel(const PubKey& pubkey);
+    ~EncModel(void) = default;
 
-    void push(const std::vector<long>& inputdata,
-              const Context& context);
-
-    void push(const helib::Ctxt& ctxt);
-
-    void clear(void);
+    void generate(const std::vector<long>& inputdata, // ここをモデル向けに修正
+                  const Context& context);
 
     void save_to_stream(std::ostream& os) const;
     void load_from_stream(std::istream& is);
@@ -58,11 +52,8 @@ struct EncData
     
     size_t size(void) const;
 
-    const helib::Ctxt& data(void) const;
-    helib::Ctxt& data(void);
-    
-    const std::vector<helib::Ctxt>& vdata(void) const;
-    std::vector<helib::Ctxt>& vdata(void);
+    const std::vector<helib::Ctxt>& data(void) const;
+    std::vector<helib::Ctxt>& data(void);
 
     size_t stream_size(void) const;
 
@@ -73,4 +64,4 @@ private:
 
 } /* namespace nbc_share */
 
-#endif /* NBC_ENCDATA_HPP */
+#endif /* NBC_ENCMODEL_HPP */

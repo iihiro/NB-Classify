@@ -15,8 +15,8 @@
  * limitations under the License.
  */
 
-#ifndef NBC_CLIENT_DATASET_HPP
-#define NBC_CLIENT_DATASET_HPP
+#ifndef NBC_MP_MODEL_HPP
+#define NBC_MP_MODEL_HPP
 
 #include <string>
 #include <vector>
@@ -27,30 +27,40 @@ namespace nbc_share
 class InfoFile;
 }
 
-namespace nbc_client
+namespace nbc_mp
 {
 
-//class DataInfo;
+class DataInfo;
     
-class Dataset
+struct Model
 {
-public:
-    Dataset(const nbc_share::InfoFile& info);
-    virtual ~Dataset(void) = default;
+    Model(const nbc_share::InfoFile& info);
+    virtual ~Model(void) = default;
 
     void read(const std::string& filename);
 
-    const std::vector<std::vector<long>>& data(void) const;
+    void print(void) const;
+    
+    const int class_num(void) const
+    {
+        return class_num_;
+    }
 
-public:
-    static std::vector<long> gen_permvec(const size_t class_num);
-    static std::vector<long> read_permvec(const std::string& filename);
-
+    const std::vector<std::vector<long>>& probs(void) const
+    {
+        return probs_;
+    }
+    
 private:
+    //struct Impl;
+    //std::shared_ptr<Impl> pimpl_;
     nbc_share::InfoFile info_;
-    std::vector<std::vector<long>> data_;
+    int class_num_; //Number of classes
+    int feature_num_; //Number of features
+    std::vector<int> feature_value_num_; //Number of values per feature
+    std::vector<std::vector<long>> probs_;
 };
 
-} /* namespace nbc_client */
+} /* namespace nbc_mp */
 
-#endif /* NBC_CLIENT_DATASET_HPP */
+#endif /* NBC_MP_MODEL_HPP */

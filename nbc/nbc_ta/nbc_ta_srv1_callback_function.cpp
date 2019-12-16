@@ -51,6 +51,23 @@ DEFUN_DOWNLOAD(CallbackFunctionPubkeyRequest)
     state.set(kEventPubkeyRequest);
 }
 
+// CallbackFunctionContextRequest
+DEFUN_DOWNLOAD(CallbackFunctionContextRequest)
+{
+    STDSC_LOG_INFO("Received context request. (current state : %lu)",
+                   state.current_state());
+
+    auto kind = nbc_share::SecureKeyFileManager::Kind_t::kKindContext;
+    auto skm  = param_.get_skm();
+    stdsc::Buffer context(skm.size(kind));
+    skm.data(kind, context.data());
+    STDSC_LOG_INFO("Sending context.");
+    sock.send_packet(stdsc::make_data_packet(nbc_share::kControlCodeDataContext,
+                                             skm.size(kind)));
+    sock.send_buffer(context);
+    state.set(kEventContextRequest);
+}
+
 // CallbackFunctiondResultRequest
 DEFUN_DOWNLOAD(CallbackFunctionResultRequest)
 {

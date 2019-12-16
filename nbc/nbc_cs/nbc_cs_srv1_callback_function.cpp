@@ -16,6 +16,9 @@
  */
 
 #include <fstream>
+#include <cstring>
+#include <cstdlib>
+#include <ctime>
 #include <stdsc/stdsc_buffer.hpp>
 #include <stdsc/stdsc_socket.hpp>
 #include <stdsc/stdsc_packet.hpp>
@@ -24,26 +27,64 @@
 #include <stdsc/stdsc_log.hpp>
 #include <nbc_share/nbc_packet.hpp>
 #include <nbc_share/nbc_encdata.hpp>
+#include <nbc_share/nbc_pubkey.hpp>
+#include <nbc_share/nbc_context.hpp>
 #include <nbc_cs/nbc_cs_share_callback_param.hpp>
 #include <nbc_cs/nbc_cs_srv1_callback_function.hpp>
+#include <nbc_cs/nbc_cs_client.hpp>
 #include <nbc_cs/nbc_cs_srv1_state.hpp>
+
+#include <helib/FHE.h>
+#include <helib/EncryptedArray.h>
 
 namespace nbc_cs
 {
 namespace srv1
 {
 
+// CallbackFunctionSessionCreate
+DEFUN_DOWNLOAD(CallbackFunctionSessionCreate)
+{
+    STDSC_LOG_INFO("Received session create. (current state : %lu)",
+                   state.current_state());
+
+    const int32_t session_id = 1234;
+    const size_t size = sizeof(session_id);
+    
+    stdsc::Buffer buffer(size);
+    std::memcpy(buffer.data(), &session_id, size);
+    STDSC_LOG_INFO("Sending session id. (id: %d)", session_id);
+    sock.send_packet(stdsc::make_data_packet(nbc_share::kControlCodeDataSessionID, size));
+    sock.send_buffer(buffer);
+    state.set(kEventSessionCreate);
+}
+
 // CallbackFunctionEncModel
 DEFUN_DATA(CallbackFunctionEncModel)
 {
-    STDSC_LOG_INFO("Received encrypting model. (current state : %lu)",
+    STDSC_LOG_INFO("Received encrypted model. (current state : %lu)",
                    state.current_state());
+    
+    stdsc::BufferStream buffstream(buffer);
+    std::iostream stream(&buffstream);
+    
+    auto& client = param_.get_client();
+
+    std::shared_ptr<nbc_share::EncData> encmodel_ptr(new nbc_share::EncData(client.pubkey()));
+    encmodel_ptr->load_from_stream(stream);
+    param_.encmodel_ptr = encmodel_ptr;
+
+    std::ofstream ofs(param_.encmodel_filename);
+    encmodel_ptr->save_to_stream(ofs);
+    ofs.close();
+    
+    state.set(kEventEncModel);
 }
 
 // CallbackFunctionEncInput
 DEFUN_DATA(CallbackFunctionEncInput)
 {
-    STDSC_LOG_INFO("Received encrypting input. (current state : %lu)",
+    STDSC_LOG_INFO("Received encrypted input. (current state : %lu)",
                    state.current_state());
     STDSC_THROW_CALLBACK_IF_CHECK(
         (kStateSessionCreated == state.current_state() ||
@@ -53,15 +94,93 @@ DEFUN_DATA(CallbackFunctionEncInput)
     stdsc::BufferStream buffstream(buffer);
     std::iostream stream(&buffstream);
 
-    std::shared_ptr<nbc_share::EncData> enc_input_ptr(new nbc_share::EncData());
-    enc_input_ptr->load_from_stream(stream, param_.pubkey_filename);
-    param_.enc_input_ptr = enc_input_ptr;
+    auto& client = param_.get_client();
 
-    std::ofstream ofs(param_.enc_input_filename);
-    enc_input_ptr->save_to_stream(ofs);
+    std::shared_ptr<nbc_share::EncData> encdata_ptr(new nbc_share::EncData(client.pubkey()));
+    encdata_ptr->load_from_stream(stream);
+    param_.encdata_ptr = encdata_ptr;
+
+    std::ofstream ofs(param_.encdata_filename);
+    encdata_ptr->save_to_stream(ofs);
+    ofs.close();
     
     state.set(kEventEncInput);
-    // 次回、これを呼んで enc input のファイルが生成できることを確認するところから。
+}
+
+// CallbackFunctionPermVec
+DEFUN_DATA(CallbackFunctionPermVec)
+{
+    STDSC_LOG_INFO("Received perm vector. (current state : %lu)",
+                   state.current_state());
+    STDSC_THROW_CALLBACK_IF_CHECK(
+        (kStateSessionCreated == state.current_state() ||
+         kStateComputable     == state.current_state()),
+        "Warn: must be SessionCreated or Computable state to receive encrypting input.");
+
+    auto* p    = static_cast<const uint8_t*>(buffer.data());
+    auto  num  = *reinterpret_cast<const size_t*>(p + 0);
+    auto* data = static_cast<const void*>(p + sizeof(size_t));
+    
+    param_.permvec.resize(num, -1);
+    std::memcpy(param_.permvec.data(), data, sizeof(long) * num);
+
+    state.set(kEventPermVec);
+}
+    
+// CallbackFunctionComputeRequest
+DEFUN_DATA(CallbackFunctionComputeRequest)
+{
+    STDSC_LOG_INFO("Received compute request. (current state : %lu)",
+                   state.current_state());
+    STDSC_THROW_CALLBACK_IF_CHECK(
+        kStateComputable == state.current_state(),
+        "Warn: must be Computable state to receive compute request.");
+
+    auto* p          = static_cast<const uint8_t*>(buffer.data());
+    auto  session_id = *reinterpret_cast<const int32_t*>(p + 0);
+
+    STDSC_LOG_INFO("Start computing of SessionID#%d", session_id);
+    
+    auto& client = param_.get_client();
+    auto& context = client.context();
+    
+    auto  class_num   = param_.permvec.size();
+    auto& ct_data     = param_.encdata_ptr->data();
+    auto& model_ctxts = param_.encmodel_ptr->vdata();
+    auto& permvec     = param_.permvec;
+
+    auto& context_data = context.get();
+    NTL::ZZX G = context_data.alMod.getFactorsOverZZ()[0];
+    helib::EncryptedArray ea(context_data, G);
+
+    std::vector<helib::Ctxt> res_ctxts;
+    for (size_t j=0; j<class_num; ++j) {
+        auto res = model_ctxts[j];
+        res.multiplyBy(ct_data);
+        totalSums(ea, res);
+        res_ctxts.push_back(res);
+    }
+    STDSC_LOG_INFO("Finished calculating probability of each class");
+
+    std::vector<helib::Ctxt> permed;
+    for (size_t j=0; j<permvec.size(); ++j) {
+        permed.push_back(res_ctxts[permvec[j]]);
+    }
+    STDSC_LOG_INFO("Permuted the probability ciphertexts");
+
+    helib::Ctxt max = permed[0];
+
+    std::srand(std::time(nullptr));
+    
+    for (size_t j=1; j<class_num; ++j) {
+        auto coeff = (std::rand() % 100) + 1;
+        auto ct_diff = permed[j];
+        auto tmp = max;
+        ct_diff -= tmp;
+        ct_diff.multByConstant(NTL::to_ZZ(coeff));
+
+        // TAとの処理ループをこの後に書く
+    }
 }
 
 } /* namespace srv1 */
