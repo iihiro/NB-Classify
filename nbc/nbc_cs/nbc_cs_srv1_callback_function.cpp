@@ -128,7 +128,7 @@ DEFUN_DATA(CallbackFunctionPermVec)
 }
     
 // CallbackFunctionComputeRequest
-DEFUN_REQUEST(CallbackFunctionComputeRequest)
+DEFUN_DATA(CallbackFunctionComputeRequest)
 {
     STDSC_LOG_INFO("Received compute request. (current state : %lu)",
                    state.current_state());
@@ -136,6 +136,11 @@ DEFUN_REQUEST(CallbackFunctionComputeRequest)
         kStateComputable == state.current_state(),
         "Warn: must be Computable state to receive compute request.");
 
+    auto* p          = static_cast<const uint8_t*>(buffer.data());
+    auto  session_id = *reinterpret_cast<const int32_t*>(p + 0);
+
+    STDSC_LOG_INFO("Start computing of SessionID#%d", session_id);
+    
     auto& client = param_.get_client();
     auto& context = client.context();
     
@@ -174,7 +179,7 @@ DEFUN_REQUEST(CallbackFunctionComputeRequest)
         ct_diff -= tmp;
         ct_diff.multByConstant(NTL::to_ZZ(coeff));
 
-        
+        // TAとの処理ループをこの後に書く
     }
 }
 

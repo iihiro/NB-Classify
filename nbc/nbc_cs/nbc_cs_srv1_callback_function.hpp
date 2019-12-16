@@ -55,7 +55,7 @@ DECLARE_DATA_CLASS(CallbackFunctionPermVec);
 /**
  * @brief Provides callback function in receiving compute request.
  */
-DECLARE_REQUEST_CLASS(CallbackFunctionComputeRequest);
+DECLARE_DATA_CLASS(CallbackFunctionComputeRequest);
 
 } /* namespace srv1 */
 } /* namespace nbc_cs */

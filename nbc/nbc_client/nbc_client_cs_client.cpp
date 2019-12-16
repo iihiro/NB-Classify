@@ -99,7 +99,10 @@ struct CSClient::Impl
     void send_compute_request(const int32_t session_id)
     {
         STDSC_LOG_INFO("Requesting compute.");
-        client_.send_request_blocking(nbc_share::kControlCodeRequestCompute);
+        stdsc::Buffer buffer(sizeof(session_id));
+        std::memcpy(buffer.data(), static_cast<const void*>(&session_id),
+                    sizeof(session_id));
+        client_.send_data_blocking(nbc_share::kControlCodeDataCompute, buffer);
     }
 
 private:

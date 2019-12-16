@@ -97,7 +97,7 @@ static void exec(const Option& opt)
         
         std::shared_ptr<stdsc::CallbackFunction> cb_compute(
             new nbc_cs::srv1::CallbackFunctionComputeRequest(cb_param));
-        callback1.set(nbc_share::kControlCodeRequestCompute, cb_compute);
+        callback1.set(nbc_share::kControlCodeDataCompute, cb_compute);
     }
 
     std::shared_ptr<nbc_cs::srv1::CSServer> server1
