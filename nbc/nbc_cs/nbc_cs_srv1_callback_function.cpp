@@ -59,6 +59,21 @@ DEFUN_DATA(CallbackFunctionEncModel)
 {
     STDSC_LOG_INFO("Received encrypted model. (current state : %lu)",
                    state.current_state());
+    
+    stdsc::BufferStream buffstream(buffer);
+    std::iostream stream(&buffstream);
+    
+    auto& client = param_.get_client();
+
+    std::shared_ptr<nbc_share::EncData> encmodel_ptr(new nbc_share::EncData(client.pubkey()));
+    encmodel_ptr->load_from_stream(stream);
+    param_.encmodel_ptr = encmodel_ptr;
+
+    std::ofstream ofs(param_.encmodel_filename);
+    encmodel_ptr->save_to_stream(ofs);
+    ofs.close();
+    
+    state.set(kEventEncModel);
 }
 
 // CallbackFunctionEncInput

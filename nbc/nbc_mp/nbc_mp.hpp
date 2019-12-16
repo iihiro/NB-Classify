@@ -15,46 +15,41 @@
  * limitations under the License.
  */
 
-#ifndef NBC_CLIENT_CS_CLIENT_HPP
-#define NBC_CLIENT_CS_CLIENT_HPP
+#ifndef NBC_MP_HPP
+#define NBC_MP_HPP
 
 #include <memory>
-#include <string>
+#include <vector>
+#include <functional>
 #include <nbc_share/nbc_define.hpp>
 
-namespace nbc_share
+namespace nbc_mp
 {
-    //class PubKey;
-    class EncData;
-}
-
-namespace nbc_client
-{
-
-//class Dataset;
+    
+//class Model;
     
 /**
- * @brief Provides client for Server#1 on CS.
+ * @brief Provides client.
  */
-class CSClient
+class ModelProvider
 {
 public:
-    CSClient(const char* host, const char* port);
-    virtual ~CSClient(void) = default;
+    ModelProvider(const char* ta_host, const char* ta_port,
+                  const char* cs_host, const char* cs_port,
+                  const bool dl_pubkey = true,
+                  const uint32_t retry_interval_usec = NBC_RETRY_INTERVAL_USEC,
+                  const uint32_t timeout_sec = NBC_TIMEOUT_SEC);
+    virtual ~ModelProvider(void) = default;
 
-    void connect(const uint32_t retry_interval_usec = NBC_RETRY_INTERVAL_USEC,
-                 const uint32_t timeout_sec = NBC_TIMEOUT_SEC);
-    void disconnect();
+    void send_encmodel(const std::vector<std::vector<long>>& probs,
+                       const size_t num_features,
+                       const size_t class_num);
     
-    int32_t send_session_create();
-    void send_encdata(const int32_t session_id, const nbc_share::EncData& encdata);
-    void send_compute_request(const int32_t session_id);
-
 private:
     struct Impl;
     std::shared_ptr<Impl> pimpl_;
 };
 
-} /* namespace nbc_client */
+} /* namespace nbc_mp */
 
-#endif /* NBC_CLIENT_CS_CLIENT_HPP */
+#endif /* NBC_MP_HPP */

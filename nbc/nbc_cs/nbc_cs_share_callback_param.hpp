@@ -41,11 +41,13 @@ struct CallbackParam
     std::string pubkey_filename;
     std::string context_filename;
     std::string encdata_filename;
+    std::string encmodel_filename;
 
     void set_client(std::shared_ptr<nbc_cs::Client>& client);
     nbc_cs::Client& get_client(void);
     
     std::shared_ptr<nbc_share::EncData> encdata_ptr;
+    std::shared_ptr<nbc_share::EncData> encmodel_ptr;
 private:
     struct Impl;
     std::shared_ptr<Impl> pimpl_;

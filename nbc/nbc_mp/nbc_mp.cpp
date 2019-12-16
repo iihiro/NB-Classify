@@ -30,25 +30,19 @@
 #include <nbc_share/nbc_context.hpp>
 #include <nbc_share/nbc_encdata.hpp>
 #include <nbc_share/nbc_infofile.hpp>
-#include <nbc_client/nbc_client_ta_client.hpp>
-#include <nbc_client/nbc_client_cs_client.hpp>
-#include <nbc_client/nbc_client_dataset.hpp>
-#include <nbc_client/nbc_client.hpp>
+#include <nbc_mp/nbc_mp_ta_client.hpp>
+#include <nbc_mp/nbc_mp_cs_client.hpp>
+#include <nbc_mp/nbc_mp_model.hpp>
+#include <nbc_mp/nbc_mp.hpp>
 
 #include <helib/FHE.h>
 #include <helib/EncryptedArray.h>
 
-namespace nbc_client
+namespace nbc_mp
 {
     
-struct Client::Impl
+struct ModelProvider::Impl
 {
-    struct ResultCallback
-    {
-        std::function<void(const int64_t result, void* args)> func;
-        void* args;
-    };
-    
     Impl(const char* ta_host, const char* ta_port,
          const char* cs_host, const char* cs_port,
          const bool dl_pubkey,
@@ -77,37 +71,51 @@ struct Client::Impl
         cs_client_->disconnect();
     }
 
-    int32_t create_session(std::function<void(const int64_t result, void* args)> result_cb_func,
-                           void* result_cb_args)
-    {
-        result_cb_.func = result_cb_func;
-        result_cb_.args = result_cb_args;
-        return cs_client_->send_session_create();
-    }
-    
-    void compute(const int32_t session_id,
-                 const std::vector<long>& data,
-                 const size_t class_num)
+    void send_encmodel(const std::vector<std::vector<long>>& probs,
+                       const size_t num_features,
+                       const size_t class_num)
     {
         auto& context = *context_;
         auto& pubkey  = *pubkey_;
-        
-        auto& context_data = context.get();
-        const auto num_slots = context_data.zMStar.getNSlots();
-        std::vector<long> inputdata(num_slots);
-        std::copy(data.begin(), data.end(), inputdata.begin());
-        
-        STDSC_LOG_DEBUG("data.size=%lu, inputdata.size=%lu", data.size(),inputdata.size());
+
+        const auto num_slots = context.get().zMStar.getNSlots();
+
+        size_t num_probs = num_features + 1;
+        size_t num_data  = num_slots / num_probs;
 
         nbc_share::EncData encdata(pubkey);
-        encdata.push(inputdata, context);
-        encdata.save_to_file("encdata.txt");
-
-        cs_client_->send_encdata(session_id, encdata);
-        cs_client_->send_compute_request(session_id);
         
-        auto& cbfunc = result_cb_.func;
-        cbfunc(123, result_cb_.args);
+        for (size_t i=0; i<class_num; ++i) {
+            
+            std::vector<long> tmp = probs[i];
+            for (size_t j=0; j<num_data - 1; j++) {
+                // ↓たぶんこれバグじゃない？？ インデックス j でしょ？
+                tmp.insert(tmp.end(), probs[i].begin(), probs[i].end());
+            }
+            tmp.resize(num_slots);
+            //helib::Ctxt ctxt(pubkey);
+            //ea.encrypt(ctxt, pubkey, tmp);
+
+            encdata.push(tmp, context);
+        }
+
+        encdata.save_to_file("encdata.txt");
+        cs_client_->send_encdata(encdata);
+        
+        //std::vector<long> inputdata(num_slots);
+        //std::copy(data.begin(), data.end(), inputdata.begin());
+        //
+        //STDSC_LOG_DEBUG("data.size=%lu, inputdata.size=%lu", data.size(),inputdata.size());
+        //
+        //nbc_share::EncData encdata(pubkey);
+        //encdata.generate(inputdata, context);
+        //encdata.save_to_file("encdata.txt");
+        //
+        //cs_client_->send_encdata(session_id, encdata);
+        //cs_client_->send_compute_request(session_id);
+        //
+        //auto& cbfunc = result_cb_.func;
+        //cbfunc(123, result_cb_.args);
     }
 
     //void compute(const int32_t session_id,
@@ -143,31 +151,29 @@ private:
     const uint32_t timeout_sec_;
     std::shared_ptr<nbc_share::Context> context_;
     std::shared_ptr<nbc_share::PubKey> pubkey_;
-    ResultCallback result_cb_;
-    
 };
 
-Client::Client(const char* ta_host, const char* ta_port,
-               const char* cs_host, const char* cs_port,
-               const bool dl_pubkey,
-               const uint32_t retry_interval_usec,
-               const uint32_t timeout_sec)
+ModelProvider::ModelProvider(const char* ta_host, const char* ta_port,
+                             const char* cs_host, const char* cs_port,
+                             const bool dl_pubkey,
+                             const uint32_t retry_interval_usec,
+                             const uint32_t timeout_sec)
     : pimpl_(new Impl(ta_host, ta_port, cs_host, cs_port,
                       dl_pubkey, retry_interval_usec, timeout_sec))
 {
 }
 
-int32_t Client::create_session(std::function<void(const int64_t result, void* args)> result_cb_func,
-                               void* result_cb_args)
+//int32_t Client::create_session(std::function<void(const int64_t result, void* args)> result_cb_func,
+//                               void* result_cb_args)
+//{
+//    return pimpl_->create_session(result_cb_func, result_cb_args);
+//}
+    
+void ModelProvider::send_encmodel(const std::vector<std::vector<long>>& probs,
+                                  const size_t num_features,
+                                  const size_t class_num)
 {
-    return pimpl_->create_session(result_cb_func, result_cb_args);
+    pimpl_->send_encmodel(probs, num_features, class_num);
 }
     
-void Client::compute(const int32_t session_id,
-                     const std::vector<long>& data,
-                     const size_t class_num)
-{
-    pimpl_->compute(session_id, data, class_num);
-}
-    
-} /* namespace nbc_client */
+} /* namespace nbc_mp */

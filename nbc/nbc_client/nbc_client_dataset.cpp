@@ -3,51 +3,52 @@
 #include <sstream>
 #include <stdsc/stdsc_log.hpp>
 #include <stdsc/stdsc_exception.hpp>
+#include <nbc_share/nbc_infofile.hpp>
 #include <nbc_client/nbc_client_dataset.hpp>
 
 namespace nbc_client
 {
 
-DataInfo readInfo(const std::string& filename)
-{
-    DataInfo info;
-
-    std::ifstream infile(filename);
-    std::string line;
-    int count = 0;
-    info.num_features = 0;
-
-    if (!infile.is_open()) {
-        std::ostringstream oss;
-        oss << "Failed to open file. (" << filename << ")";
-        STDSC_THROW_FILE(oss.str());
-    }
-
-    while (std::getline(infile, line)) {
-        std::stringstream ss(line);
-
-        if (count == 0) {
-            count++;
-            while (ss.good()) {
-                std::string substr;
-                std::getline(ss, substr, ',');
-                info.class_names.push_back(substr);
-            }
-        } else {
-            std::vector<std::string> temp;
-            while (ss.good()) {
-                std::string substr;
-                std::getline(ss, substr, ',');
-                temp.push_back(substr);
-            }
-            info.num_features += temp.size();
-            info.attr_values.push_back(temp);
-        }
-    }
-    info.class_num = info.class_names.size();
-
-    return info;
-}
+//DataInfo readInfo(const std::string& filename)
+//{
+//    DataInfo info;
+//
+//    std::ifstream infile(filename);
+//    std::string line;
+//    int count = 0;
+//    info.num_features = 0;
+//
+//    if (!infile.is_open()) {
+//        std::ostringstream oss;
+//        oss << "Failed to open file. (" << filename << ")";
+//        STDSC_THROW_FILE(oss.str());
+//    }
+//
+//    while (std::getline(infile, line)) {
+//        std::stringstream ss(line);
+//
+//        if (count == 0) {
+//            count++;
+//            while (ss.good()) {
+//                std::string substr;
+//                std::getline(ss, substr, ',');
+//                info.class_names.push_back(substr);
+//            }
+//        } else {
+//            std::vector<std::string> temp;
+//            while (ss.good()) {
+//                std::string substr;
+//                std::getline(ss, substr, ',');
+//                temp.push_back(substr);
+//            }
+//            info.num_features += temp.size();
+//            info.attr_values.push_back(temp);
+//        }
+//    }
+//    info.class_num = info.class_names.size();
+//
+//    return info;
+//}
 
 std::vector<std::vector<std::string>> readData(const std::string& filename)
 {
@@ -107,71 +108,78 @@ void printParsedData(const std::vector<long>& parsed)
     std::cout << std::endl;
 }
     
-struct Dataset::Impl
-{
-    Impl(void)
-        : info_()
-    {
-    }
+//struct Dataset::Impl
+//{
+//    Impl(const nbc_share::InfoFile& info)
+//        : info_(info)
+//    {
+//    }
+//
+//    ~Impl(void)
+//    {}
+//
+//    void read(const std::string& filename)
+//    {
+//        auto orig_data = readData(filename);
+//        STDSC_LOG_TRACE("read test data from %s.",
+//                        filename.c_str());
+//
+//        data_.clear();
+//        for (const auto& d : orig_data) {
+//            std::vector<long> tmp = {1};
+//            auto tmp2 = parseData(d, info_.attr_values);
+//            tmp.insert(tmp.end(), tmp2.begin(), tmp2.end());
+//            //tmp.resize(num_slots); //-> encrypt時にリサイズするようにする
+//            data_.push_back(tmp);
+//        }
+//    }
+//
+////    const DataInfo& info(void) const
+////    {
+////        return info_;
+////    }
+//    
+//    const std::vector<std::vector<long>>& data(void) const
+//    {
+//        return data_;
+//    }
+//
+//private:
+//    //nbc_share::InfoFile info_;
+//    std::vector<std::vector<long>> data_;
+//};
 
-    ~Impl(void)
-    {}
-
-    void read(const std::string& info_filename,
-              const std::string& test_filename)
-    {
-        info_ = readInfo(info_filename);
-        STDSC_LOG_INFO("read info from %s. (nclass: %d)",
-                       info_filename.c_str(), info_.class_num);
-        
-        auto orig_data = readData(test_filename);
-        STDSC_LOG_TRACE("read test data from %s.",
-                        test_filename.c_str());
-
-        data_.clear();
-        for (const auto& d : orig_data) {
-            std::vector<long> tmp = {1};
-            auto tmp2 = parseData(d, info_.attr_values);
-            tmp.insert(tmp.end(), tmp2.begin(), tmp2.end());
-            //tmp.resize(num_slots); //-> encrypt時にリサイズするようにする
-            data_.push_back(tmp);
-        }
-    }
-
-    const DataInfo& info(void) const
-    {
-        return info_;
-    }
-    
-    const std::vector<std::vector<long>>& data(void) const
-    //std::vector<std::vector<long>>& data(void)
-    {
-        return data_;
-    }
-
-private:
-    DataInfo info_;
-    std::vector<std::vector<long>> data_;
-};
-
-Dataset::Dataset(void)
-    : pimpl_(new Impl())
+Dataset::Dataset(const nbc_share::InfoFile& info)
+    : info_(info)
+//    : pimpl_(new Impl(info))
 {}
 
-void Dataset::read(const std::string& info_filename,
-                   const std::string& test_filename)
+void Dataset::read(const std::string& filename)
 {
-    return pimpl_->read(info_filename, test_filename);
+    auto orig_data = readData(filename);
+    STDSC_LOG_TRACE("read test data from %s.",
+                    filename.c_str());
+    
+    data_.clear();
+    for (const auto& d : orig_data) {
+        std::vector<long> tmp = {1};
+        auto tmp2 = parseData(d, info_.attr_values);
+        tmp.insert(tmp.end(), tmp2.begin(), tmp2.end());
+        //tmp.resize(num_slots); //-> encrypt時にリサイズするようにする
+        data_.push_back(tmp);
+    }
+    //return pimpl_->read(filename);
 }
     
-const DataInfo& Dataset::info(void) const
-{
-    return pimpl_->info();
-}
+//const DataInfo& Dataset::info(void) const
+//{
+//    return pimpl_->info();
+//}
     
 const std::vector<std::vector<long>>& Dataset::data(void) const
 {
-    return pimpl_->data();
+    return data_;
+    //return pimpl_->data();
 }
 
 

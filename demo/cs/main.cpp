@@ -32,7 +32,8 @@
 
 static constexpr const char* PUBKEY_FILENAME   = "pubkey.txt";
 static constexpr const char* CONTEXT_FILENAME  = "context.txt";
-static constexpr const char* ENCDATA_FILENAME = "encdata.txt";
+static constexpr const char* ENCDATA_FILENAME  = "encdata.txt";
+static constexpr const char* ENCMODEL_FILENAME = "encmodel.txt";
 
 struct Option
 {
@@ -69,9 +70,10 @@ static void exec(const Option& opt)
     stdsc::CallbackFunctionContainer callback1;
     nbc_cs::CallbackParam cb_param;
     {        
-        cb_param.pubkey_filename  = PUBKEY_FILENAME;
-        cb_param.context_filename = CONTEXT_FILENAME;
-        cb_param.encdata_filename = ENCDATA_FILENAME;
+        cb_param.pubkey_filename   = PUBKEY_FILENAME;
+        cb_param.context_filename  = CONTEXT_FILENAME;
+        cb_param.encdata_filename  = ENCDATA_FILENAME;
+        cb_param.encmodel_filename = ENCMODEL_FILENAME;
         
         std::shared_ptr<nbc_cs::Client> client(
             new nbc_cs::Client(host, PORT_TA_SRV1));

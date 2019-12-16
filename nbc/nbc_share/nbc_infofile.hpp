@@ -15,43 +15,29 @@
  * limitations under the License.
  */
 
-#ifndef NBC_MP_CS_CLIENT_HPP
-#define NBC_MP_CS_CLIENT_HPP
+#ifndef NBC_INFOFILE_HPP
+#define NBC_INFOFILE_HPP
 
-#include <memory>
+#include <cstdint>
 #include <string>
-#include <nbc_share/nbc_define.hpp>
+#include <vector>
 
 namespace nbc_share
 {
-    class EncData;
-}
 
-namespace nbc_mp
+struct InfoFile
 {
+    InfoFile(void) = default;
+    virtual ~InfoFile(void) = default;
 
-//class Dataset;
-    
-/**
- * @brief Provides client for Server#1 on CS.
- */
-class CSClient
-{
-public:
-    CSClient(const char* host, const char* port);
-    virtual ~CSClient(void) = default;
+    void read(const std::string& filename);
 
-    void connect(const uint32_t retry_interval_usec = NBC_RETRY_INTERVAL_USEC,
-                 const uint32_t timeout_sec = NBC_TIMEOUT_SEC);
-    void disconnect();
-    
-    void send_encdata(const nbc_share::EncData& encdata);
-
-private:
-    struct Impl;
-    std::shared_ptr<Impl> pimpl_;
+	int64_t class_num;
+	int64_t num_features;
+    std::vector<std::string> class_names;
+    std::vector<std::vector<std::string>> attr_values;
 };
 
-} /* namespace nbc_mp */
+} /* namespace nbc_share */
 
-#endif /* NBC_MP_CS_CLIENT_HPP */
+#endif /* NBC_INFOFILE_HPP */

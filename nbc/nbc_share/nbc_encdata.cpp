@@ -14,13 +14,29 @@ namespace nbc_share
 struct EncData::Impl
 {
     Impl(const PubKey& pubkey)
-        : pubkey_(pubkey),
-          size_()
+        : pubkey_(pubkey)
     {
     }
 
-    void generate(const std::vector<long>& inputdata,
-                  const Context& context)
+    Impl(const PubKey& pubkey,
+         const helib::Ctxt& ctxt)
+        : pubkey_(pubkey)
+    {
+        //ctxt_ptr_ = std::make_shared<helib::Ctxt>(pubkey_.get());
+        //*ctxt_ptr_ = ctxt;
+        vctxt_.push_back(ctxt);
+    }
+    
+    //Impl(const PubKey& pubkey,
+    //     std::shared_ptr<helib::Ctxt> ctxt_ptr)
+    //    : pubkey_(pubkey),
+    //      size_(),
+    //      ctxt_ptr_(ctxt_ptr)
+    //{
+    //}
+
+    void push(const std::vector<long>& inputdata,
+              const Context& context)
     {
         auto& context_data = context.get();
         auto& pubkey_data  = pubkey_.get();
@@ -28,35 +44,66 @@ struct EncData::Impl
         NTL::ZZX G = context_data.alMod.getFactorsOverZZ()[0];
         helib::EncryptedArray ea(context_data, G);
         
-        std::shared_ptr<helib::Ctxt> encdata_ptr(new helib::Ctxt(pubkey_data));
-        auto& ctxt = *encdata_ptr;
+        //std::shared_ptr<helib::Ctxt> encdata_ptr(new helib::Ctxt(pubkey_data));
+        //auto& ctxt = *encdata_ptr;
+        helib::Ctxt ctxt(pubkey_data);
         ea.encrypt(ctxt, pubkey_data, inputdata);
         
-        ctxt_ptr_ = encdata_ptr;
-        size_     = inputdata.size();
+        //ctxt_ptr_ = encdata_ptr;
+        vctxt_.push_back(ctxt);
+        //size_     = inputdata.size();
+    }
+
+    void push(const helib::Ctxt& ctxt)
+    {
+        vctxt_.push_back(ctxt);
+    }
+
+    void clear(void)
+    {
+        vctxt_.clear();
     }
     
     void save_to_stream(std::ostream& os) const
     {
-        if (ctxt_ptr_)
-        {
-            os << size_ << std::endl;
-
-            auto& ctxt = *ctxt_ptr_;
+        //if (ctxt_ptr_)
+        //{
+        //    os << size_ << std::endl;
+        //
+        //    auto& ctxt = *ctxt_ptr_;
+        //    os << ctxt << std::endl;
+        //}
+        if (vctxt_.size() == 0) {
+            return;
+        }
+        
+        os << vctxt_.size() << std::endl;
+        for (const auto& ctxt : vctxt_) {
             os << ctxt << std::endl;
         }
     }
 
     void load_from_stream(std::istream& is)
     {
-        is >> size_;
+        //is >> size_;
+        //
+        //auto& pubkey  = pubkey_.get();
+        //std::shared_ptr<helib::Ctxt> ctxt_ptr(new helib::Ctxt(pubkey));
+        //auto& ctxt = *ctxt_ptr;
+        //is >> ctxt;
+        //
+        //ctxt_ptr_ = ctxt_ptr;
 
-        auto& pubkey  = pubkey_.get();
-        std::shared_ptr<helib::Ctxt> ctxt_ptr(new helib::Ctxt(pubkey));
-        auto& ctxt = *ctxt_ptr;
-        is >> ctxt;
+        size_t vsize;
+        is >> vsize;
 
-        ctxt_ptr_ = ctxt_ptr;
+        clear();
+
+        for (size_t i=0; i<vsize; ++i) {
+            helib::Ctxt ctxt(pubkey_.get());
+            is >> ctxt;
+            vctxt_.push_back(ctxt);
+        }
     }
 
     void save_to_file(const std::string& filepath) const
@@ -78,21 +125,45 @@ struct EncData::Impl
         ifs.close();
     }
     
-    size_t size(void) const
-    {
-        return size_;
-    }
+    //size_t size(void) const
+    //{
+    //    return size_;
+    //}
+
+    //const helib::Ctxt& data(void) const
+    //{
+    //    return *ctxt_ptr_;
+    //}
+    //
+    //helib::Ctxt& data(void)
+    //{
+    //    return *ctxt_ptr_;
+    //}
 
     const helib::Ctxt& data(void) const
     {
-        return *ctxt_ptr_;
+        STDSC_THROW_FAILURE_IF_CHECK(vctxt_.size() > 0, "Data is empty.");
+        return vctxt_[0];
     }
-
+    
     helib::Ctxt& data(void)
     {
-        return *ctxt_ptr_;
+        STDSC_THROW_FAILURE_IF_CHECK(vctxt_.size() > 0, "Data is empty.");
+        return vctxt_[0];
     }
 
+    const std::vector<helib::Ctxt>& vdata(void) const
+    {
+        STDSC_THROW_FAILURE_IF_CHECK(vctxt_.size() > 0, "Data is empty.");
+        return vctxt_;
+    }
+    
+    std::vector<helib::Ctxt>& vdata(void)
+    {
+        STDSC_THROW_FAILURE_IF_CHECK(vctxt_.size() > 0, "Data is empty.");
+        return vctxt_;
+    }
+    
     size_t stream_size(void) const
     {
         std::ostringstream oss;
@@ -102,8 +173,9 @@ struct EncData::Impl
     
 private:
     const PubKey&  pubkey_;
-    size_t size_;
-    std::shared_ptr<helib::Ctxt> ctxt_ptr_;
+    //size_t size_;
+    //std::shared_ptr<helib::Ctxt> ctxt_ptr_;
+    std::vector<helib::Ctxt> vctxt_;
 };
 
 EncData::EncData(const PubKey& pubkey)
@@ -111,10 +183,32 @@ EncData::EncData(const PubKey& pubkey)
 {
 }
 
-void EncData::generate(const std::vector<long>& inputdata,
-                       const Context& context)
+EncData::EncData(const PubKey& pubkey,
+                 const helib::Ctxt& ctxt)
+    : pimpl_(new Impl(pubkey))
 {
-    pimpl_->generate(inputdata, context);
+}
+
+//EncData::EncData(const PubKey& pubkey,
+//                 std::shared_ptr<helib::Ctxt> ctxt_ptr)
+//    : pimpl_(new Impl(pubkey, ctxt_ptr))
+//{
+//}
+
+void EncData::push(const std::vector<long>& inputdata,
+                   const Context& context)
+{
+    pimpl_->push(inputdata, context);
+}
+
+void EncData::push(const helib::Ctxt& ctxt)
+{
+    pimpl_->push(ctxt);
+}
+
+void EncData::clear()
+{
+    pimpl_->clear();
 }
 
 void EncData::save_to_stream(std::ostream& os) const
@@ -137,10 +231,10 @@ void EncData::load_from_file(const std::string& filepath)
     pimpl_->load_from_file(filepath);
 }
     
-size_t EncData::size(void) const
-{
-    return pimpl_->size();
-}
+//size_t EncData::size(void) const
+//{
+//    return pimpl_->size();
+//}
 
 const helib::Ctxt& EncData::data(void) const
 {
@@ -152,6 +246,16 @@ helib::Ctxt& EncData::data(void)
     return pimpl_->data();
 }
 
+const std::vector<helib::Ctxt>& EncData::vdata(void) const
+{
+    return pimpl_->vdata();
+}
+
+std::vector<helib::Ctxt>& EncData::vdata(void)
+{
+    return pimpl_->vdata();
+}
+    
 size_t EncData::stream_size(void) const
 {
     return pimpl_->stream_size();
