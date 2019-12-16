@@ -50,7 +50,7 @@ enum Event_t : uint64_t
     kEventEncModel       = 2,
     kEventEncInput       = 3,
     kEventPermVec        = 4,
-    kEventComputeRequest = 4,
+    kEventComputeRequest = 5,
 };
 
 /**
