@@ -90,7 +90,27 @@ std::vector<long> genPermVec(int n)
     
     return perm_vec;
 }
-    
+
+std::vector<long> readPermVec(const std::string& filename)
+{
+    std::vector<long> perm_vec;
+    std::ifstream infile(filename);
+    std::string line;
+
+    while (std::getline(infile, line)) {
+        std::stringstream ss(line);
+        int num;
+
+        while (ss >> num){
+            perm_vec.push_back(num);
+            if (ss.peek()== ',') {
+                ss.ignore();
+            }
+        }
+    }
+    return perm_vec;
+}
+
     
 Dataset::Dataset(const nbc_share::InfoFile& info)
     : info_(info)
@@ -119,6 +139,11 @@ const std::vector<std::vector<long>>& Dataset::data(void) const
 std::vector<long> Dataset::gen_permvec(const size_t class_num)
 {
     return genPermVec(static_cast<int>(class_num));
+}
+
+std::vector<long> Dataset::read_permvec(const std::string& filename)
+{
+    return readPermVec(filename);
 }
 
 

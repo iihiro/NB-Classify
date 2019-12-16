@@ -44,6 +44,7 @@ public:
 
 public:
     static std::vector<long> gen_permvec(const size_t class_num);
+    static std::vector<long> read_permvec(const std::string& filename);
 
 private:
     nbc_share::InfoFile info_;

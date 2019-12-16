@@ -38,6 +38,8 @@
 #include <helib/FHE.h>
 #include <helib/EncryptedArray.h>
 
+#define USE_TEST_PERMVEC
+
 namespace nbc_client
 {
     
@@ -103,7 +105,14 @@ struct Client::Impl
         encdata.push(inputdata, context);
         encdata.save_to_file("encdata.txt");
 
+#if defined(USE_TEST_PERMVEC)
+        auto permvec = Dataset::read_permvec("../../../testdata/permvec.txt");
+#else
         auto permvec = Dataset::gen_permvec(class_num);
+#endif
+        printf("permvec: sz=%lu, data= ", permvec.size());
+        for (auto& v : permvec) printf("%ld ", v);
+        printf("\n");
 
         cs_client_->send_encdata(session_id, encdata);
         cs_client_->send_permvec(session_id, permvec);
