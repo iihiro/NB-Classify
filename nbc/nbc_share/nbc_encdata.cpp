@@ -100,31 +100,6 @@ struct EncData::Impl
         return oss.str().size();
     }
     
-//private:
-//    void read_context_and_pubkey(const std::string& pubkey_filename,
-//                                 std::shared_ptr<helib::FHEcontext>& context,
-//                                 std::shared_ptr<helib::FHEPubKey>& pubkey)
-//    {
-//        unsigned long m, p, r;
-//        std::vector<long> gens, ords;
-//        std::ifstream ct(pubkey_filename);
-//        helib::readContextBase(ct, m, p, r, gens, ords);
-//        
-//        std::shared_ptr<helib::FHEcontext> context_ptr(
-//            new helib::FHEcontext(m, p, r, gens, ords));
-//        ct >> *context_ptr;
-//        
-//        std::shared_ptr<helib::FHEPubKey> pubkey_ptr(
-//            new helib::FHEPubKey(*context_ptr));
-//        ct >> *pubkey_ptr;
-//        
-//        ct.close();
-//
-//        context = context_ptr;
-//        pubkey  = pubkey_ptr;
-//    }
-
-    
 private:
     const PubKey&  pubkey_;
     size_t size_;
@@ -141,12 +116,6 @@ void EncData::generate(const std::vector<long>& inputdata,
 {
     pimpl_->generate(inputdata, context);
 }
-
-//void EncData::generate(const std::vector<long>& inputdata,
-//                       const std::string& pubkey_filename)
-//{
-//    pimpl_->generate(inputdata, pubkey_filename);
-//}
 
 void EncData::save_to_stream(std::ostream& os) const
 {
@@ -167,12 +136,6 @@ void EncData::load_from_file(const std::string& filepath)
 {
     pimpl_->load_from_file(filepath);
 }
-    
-//void EncData::load_from_stream(std::istream& is,
-//                               const std::string& pubkey_filename)
-//{
-//    pimpl_->load_from_stream(is, pubkey_filename);
-//}
     
 size_t EncData::size(void) const
 {

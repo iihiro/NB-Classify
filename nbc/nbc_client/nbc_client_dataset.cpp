@@ -170,7 +170,6 @@ const DataInfo& Dataset::info(void) const
 }
     
 const std::vector<std::vector<long>>& Dataset::data(void) const
-//std::vector<std::vector<long>>& Dataset::data(void)
 {
     return pimpl_->data();
 }
