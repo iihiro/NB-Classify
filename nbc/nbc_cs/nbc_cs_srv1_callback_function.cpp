@@ -124,6 +124,14 @@ DEFUN_DATA(CallbackFunctionPermVec)
     param_.permvec.resize(num, -1);
     std::memcpy(param_.permvec.data(), data, sizeof(long) * num);
 
+    {
+        std::ostringstream oss;
+        oss << "permvec: sz=" << param_.permvec.size();
+        oss << ", data=";
+        for (auto& v : param_.permvec) oss << " " << v;
+        STDSC_LOG_DEBUG(oss.str().c_str());
+    }
+
     state.set(kEventPermVec);
 }
     
