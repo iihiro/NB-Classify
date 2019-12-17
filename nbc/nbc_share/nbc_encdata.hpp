@@ -18,9 +18,8 @@
 #ifndef NBC_ENCDATA_HPP
 #define NBC_ENCDATA_HPP
 
-#include <iostream>
 #include <memory>
-#include <vector>
+#include <nbc_share/nbc_basicdata.hpp>
 
 namespace helib
 {
@@ -36,35 +35,33 @@ class Context;
 /**
  * @brief This clas is used to hold the encrypted data.
  */
-struct EncData
+struct EncData : public nbc_share::BasicData<helib::Ctxt>
 {
     EncData(const PubKey& pubkey);
-    EncData(const PubKey& pubkey,
-            const helib::Ctxt& ctxt);
-    ~EncData(void) = default;
+    //EncData(const PubKey& pubkey,
+    //        const helib::Ctxt& ctxt);
+    virtual ~EncData(void) = default;
 
     void push(const std::vector<long>& inputdata,
               const Context& context);
 
-    void push(const helib::Ctxt& ctxt);
+    //void push(const helib::Ctxt& ctxt);
 
-    void clear(void);
+    //void clear(void);
 
-    void save_to_stream(std::ostream& os) const;
-    void load_from_stream(std::istream& is);
+    virtual void save_to_stream(std::ostream& os) const override;
+    virtual void load_from_stream(std::istream& is) override;
 
-    void save_to_file(const std::string& filepath) const;
-    void load_from_file(const std::string& filepath);
+    //void save_to_file(const std::string& filepath) const;
+    //void load_from_file(const std::string& filepath);
     
-    size_t size(void) const;
-
-    const helib::Ctxt& data(void) const;
-    helib::Ctxt& data(void);
+    //const helib::Ctxt& data(void) const;
+    //helib::Ctxt& data(void);
     
-    const std::vector<helib::Ctxt>& vdata(void) const;
-    std::vector<helib::Ctxt>& vdata(void);
+    //const std::vector<helib::Ctxt>& vdata(void) const;
+    //std::vector<helib::Ctxt>& vdata(void);
 
-    size_t stream_size(void) const;
+    //size_t stream_size(void) const;
 
 private:
     struct Impl;

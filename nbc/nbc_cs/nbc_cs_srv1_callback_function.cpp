@@ -27,6 +27,7 @@
 #include <stdsc/stdsc_log.hpp>
 #include <nbc_share/nbc_packet.hpp>
 #include <nbc_share/nbc_encdata.hpp>
+#include <nbc_share/nbc_permvec.hpp>
 #include <nbc_share/nbc_pubkey.hpp>
 #include <nbc_share/nbc_context.hpp>
 #include <nbc_cs/nbc_cs_share_callback_param.hpp>
@@ -82,6 +83,49 @@ DEFUN_DATA(CallbackFunctionEncModel)
 }
 
 // CallbackFunctionEncInput
+#if 1
+DEFUN_DATA(CallbackFunctionEncInput)
+{
+    STDSC_LOG_INFO("Received input data. (current state : %lu)",
+                   state.current_state());
+    STDSC_THROW_CALLBACK_IF_CHECK(
+        (kStateSessionCreated == state.current_state() ||
+         kStateComputable     == state.current_state()),
+        "Warn: must be SessionCreated or Computable state to receive encrypting input.");
+
+    stdsc::BufferStream buffstream(buffer);
+    std::iostream stream(&buffstream);
+
+    auto& client = param_.get_client();
+
+    std::shared_ptr<nbc_share::EncData> encdata_ptr(new nbc_share::EncData(client.pubkey()));
+    encdata_ptr->load_from_stream(stream);
+    param_.encdata_ptr = encdata_ptr;
+
+    std::shared_ptr<nbc_share::PermVec> permvec_ptr(new nbc_share::PermVec());
+    permvec_ptr->load_from_stream(stream);
+    param_.permvec_ptr = permvec_ptr;
+
+    encdata_ptr->save_to_file(param_.encdata_filename);
+
+    {
+        const auto& vec = permvec_ptr->vdata();
+        param_.permvec.resize(vec.size(), -1);
+        std::memcpy(param_.permvec.data(), vec.data(), sizeof(long) * vec.size());
+    }
+    
+    {        
+        std::ostringstream oss;
+        oss << "permvec: sz=" << param_.permvec.size();
+        oss << ", data=";
+        for (auto& v : param_.permvec) oss << " " << v;
+        STDSC_LOG_DEBUG(oss.str().c_str());
+    }
+    
+    state.set(kEventEncInput);
+    state.set(kEventPermVec);
+}
+#else
 DEFUN_DATA(CallbackFunctionEncInput)
 {
     STDSC_LOG_INFO("Received encrypted input. (current state : %lu)",
@@ -106,6 +150,7 @@ DEFUN_DATA(CallbackFunctionEncInput)
     
     state.set(kEventEncInput);
 }
+#endif
 
 // CallbackFunctionPermVec
 DEFUN_DATA(CallbackFunctionPermVec)
