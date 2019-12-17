@@ -30,6 +30,7 @@
 #include <nbc_share/nbc_context.hpp>
 #include <nbc_share/nbc_encdata.hpp>
 #include <nbc_share/nbc_infofile.hpp>
+#include <nbc_share/nbc_permvec.hpp>
 #include <nbc_client/nbc_client_ta_client.hpp>
 #include <nbc_client/nbc_client_cs_client.hpp>
 #include <nbc_client/nbc_client_dataset.hpp>
@@ -105,11 +106,23 @@ struct Client::Impl
         encdata.push(inputdata, context);
         encdata.save_to_file("encdata.txt");
 
+        {
+            nbc_share::PermVec pvec;
+            pvec.gen_permvec(class_num);
+            pvec.load_from_csvfile("../../../testdata/permvec.txt");
+            printf("experiment permvec: sz=%lu, data= ", pvec.vdata().size());
+            for (const auto& v : pvec.vdata()) {
+                printf("%ld ", v);
+            }
+            printf("\n");
+        }
+            
 #if defined(USE_TEST_PERMVEC)
         auto permvec = Dataset::read_permvec("../../../testdata/permvec.txt");
 #else
         auto permvec = Dataset::gen_permvec(class_num);
 #endif
+        
         printf("permvec: sz=%lu, data= ", permvec.size());
         for (auto& v : permvec) printf("%ld ", v);
         printf("\n");
