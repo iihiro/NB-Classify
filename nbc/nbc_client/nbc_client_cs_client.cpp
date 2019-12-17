@@ -28,6 +28,7 @@
 #include <nbc_share/nbc_define.hpp>
 #include <nbc_share/nbc_pubkey.hpp>
 #include <nbc_share/nbc_encdata.hpp>
+#include <nbc_share/nbc_permvec.hpp>
 #include <nbc_client/nbc_client_cs_client.hpp>
 
 namespace nbc_client
@@ -95,6 +96,23 @@ struct CSClient::Impl
 
         client_.send_data_blocking(nbc_share::kControlCodeDataPermVec, buffer);
     }
+
+    void send_input(const int32_t session_id,
+                    const nbc_share::EncData& encdata,
+                    const nbc_share::PermVec& permvec)
+    {
+        auto size = encdata.stream_size() + permvec.stream_size();
+        stdsc::BufferStream buffstream(size);
+        std::iostream stream(&buffstream);
+
+        encdata.save_to_stream(stream);
+        permvec.save_to_stream(stream);
+        
+        STDSC_LOG_INFO("Sending input data.");
+        stdsc::Buffer* buffer = &buffstream;
+        client_.send_data_blocking(nbc_share::kControlCodeDataInput, *buffer);
+    }
+    
     
     void send_compute_request(const int32_t session_id)
     {
@@ -140,6 +158,13 @@ void CSClient::send_encdata(const int32_t session_id, const nbc_share::EncData& 
 void CSClient::send_permvec(const int32_t session_id, const std::vector<long>& permvec)
 {
     pimpl_->send_permvec(session_id, permvec);
+}
+
+void CSClient::send_input(const int32_t session_id,
+                          const nbc_share::EncData& encdata,
+                          const nbc_share::PermVec& permvec)
+{
+    pimpl_->send_input(session_id, encdata, permvec);
 }
 
 void CSClient::send_compute_request(const int32_t session_id)

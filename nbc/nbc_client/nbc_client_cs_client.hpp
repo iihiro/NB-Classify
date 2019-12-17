@@ -25,7 +25,8 @@
 
 namespace nbc_share
 {
-    class EncData;
+class EncData;
+class PermVec;    
 }
 
 namespace nbc_client
@@ -47,6 +48,9 @@ public:
     int32_t send_session_create();
     void send_encdata(const int32_t session_id, const nbc_share::EncData& encdata);
     void send_permvec(const int32_t session_id, const std::vector<long>& permvec);
+    void send_input(const int32_t session_id,
+                    const nbc_share::EncData& encdata,
+                    const nbc_share::PermVec& permvec);
     void send_compute_request(const int32_t session_id);
 
 private:

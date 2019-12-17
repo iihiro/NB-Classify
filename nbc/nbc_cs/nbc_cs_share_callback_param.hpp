@@ -24,6 +24,7 @@
 namespace nbc_share
 {
 class EncData;
+class PermVec;
 }
 
 namespace nbc_cs
@@ -49,6 +50,8 @@ struct CallbackParam
     
     std::shared_ptr<nbc_share::EncData> encdata_ptr;
     std::shared_ptr<nbc_share::EncData> encmodel_ptr;
+    std::shared_ptr<nbc_share::PermVec> permvec_ptr;
+    
     std::vector<long> permvec;
 private:
     struct Impl;

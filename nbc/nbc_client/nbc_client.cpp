@@ -106,29 +106,31 @@ struct Client::Impl
         encdata.push(inputdata, context);
         encdata.save_to_file("encdata.txt");
 
-        {
-            nbc_share::PermVec pvec;
-            pvec.gen_permvec(class_num);
-            pvec.load_from_csvfile("../../../testdata/permvec.txt");
-            printf("experiment permvec: sz=%lu, data= ", pvec.vdata().size());
-            for (const auto& v : pvec.vdata()) {
-                printf("%ld ", v);
-            }
-            printf("\n");
-        }
-            
-#if defined(USE_TEST_PERMVEC)
-        auto permvec = Dataset::read_permvec("../../../testdata/permvec.txt");
+        nbc_share::PermVec pvec;
+#if defined(USE_TEST_PERMVEC)        
+        pvec.load_from_csvfile("../../../testdata/permvec.txt");
 #else
-        auto permvec = Dataset::gen_permvec(class_num);
+        pvec.gen_permvec(class_num);
 #endif
-        
-        printf("permvec: sz=%lu, data= ", permvec.size());
-        for (auto& v : permvec) printf("%ld ", v);
-        printf("\n");
+        //printf("experiment permvec: sz=%lu, data= ", pvec.vdata().size());
+        //for (const auto& v : pvec.vdata()) {
+        //    printf("%ld ", v);
+        //}
+        //printf("\n");
+            
+//#if defined(USE_TEST_PERMVEC)
+//        auto permvec = Dataset::read_permvec("../../../testdata/permvec.txt");
+//#else
+//        auto permvec = Dataset::gen_permvec(class_num);
+//#endif
+//        
+//        printf("permvec: sz=%lu, data= ", permvec.size());
+//        for (auto& v : permvec) printf("%ld ", v);
+//        printf("\n");
 
-        cs_client_->send_encdata(session_id, encdata);
-        cs_client_->send_permvec(session_id, permvec);
+        //cs_client_->send_encdata(session_id, encdata);
+        //cs_client_->send_permvec(session_id, permvec);
+        cs_client_->send_input(session_id, encdata, pvec);
         cs_client_->send_compute_request(session_id);
         
         auto& cbfunc = result_cb_.func;
