@@ -20,9 +20,17 @@
 
 #include <memory>
 
+namespace helib
+{
+class FHESecKey;
+}
+
 namespace nbc_share
 {
-    class SecureKeyFileManager;
+class SecureKeyFileManager;
+class Context;
+class PubKey;
+class SecKey;
 }
 
 namespace nbc_ta
@@ -42,6 +50,10 @@ struct CallbackParam
     void set_result(const int32_t session_id, const int64_t result_index);
     int64_t get_result(const int32_t session_id) const;
 
+    std::shared_ptr<nbc_share::Context> context_ptr;
+    std::shared_ptr<nbc_share::PubKey> pubkey_ptr;
+    std::shared_ptr<nbc_share::SecKey> seckey_ptr;
+    
 private:
     struct Impl;
     std::shared_ptr<Impl> pimpl_;

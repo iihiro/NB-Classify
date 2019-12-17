@@ -1,6 +1,8 @@
 #include <numeric>
 #include <random>
 #include <algorithm>
+#include <fstream>
+#include <sstream>
 //#include <stdsc/stdsc_exception.hpp>
 //#include <nbc_share/nbc_utility.hpp>
 #include <nbc_share/nbc_permvec.hpp>

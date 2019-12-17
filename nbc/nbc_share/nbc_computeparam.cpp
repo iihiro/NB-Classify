@@ -15,49 +15,26 @@
  * limitations under the License.
  */
 
-#ifndef NBC_TA_SRV1_HPP
-#define NBC_TA_SRV1_HPP
-
-#include <memory>
-#include <string>
-
-namespace stdsc
-{
-class CallbackFunctionContainer;
-class StateContext;
-}
+#include <nbc_share/nbc_computeparam.hpp>
 
 namespace nbc_share
 {
-class SecureKeyFileManager;
+
+std::ostream& operator<<(std::ostream& os, const ComputeParam& cparam)
+{
+    os << cparam.index      << std::endl;
+    os << cparam.flag       << std::endl;
+    os << cparam.session_id << std::endl;
+    return os;
 }
 
-namespace nbc_ta
+std::istream& operator>>(std::istream& is, ComputeParam& cparam)
 {
-namespace srv1
-{
+    is >> cparam.index;
+    is >> cparam.flag;
+    is >> cparam.session_id;
+    return is;
+}
 
-/**
- * @brief Provides Server#1 on TA.
- */
-class TAServer
-{
-public:
-    TAServer(const char* port, stdsc::CallbackFunctionContainer& callback,
-             stdsc::StateContext& state,
-             nbc_share::SecureKeyFileManager& skm);
-    ~TAServer(void) = default;
-
-    void start(void);
-    void stop(void);
-    void wait(void);
-
-private:
-    struct Impl;
-    std::shared_ptr<Impl> pimpl_;
-};
-
-} /* namespace srv1 */
-} /* namespace nbc_ta */
-
-#endif /* NBC_TA_SRV1_HPP */
+    
+} /* namespace nbc_share */

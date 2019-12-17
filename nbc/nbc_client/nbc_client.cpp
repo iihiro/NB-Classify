@@ -103,7 +103,7 @@ struct Client::Impl
         STDSC_LOG_DEBUG("data.size=%lu, inputdata.size=%lu", data.size(), inputdata.size());
 
         nbc_share::EncData encdata(pubkey);
-        encdata.push(inputdata, context);
+        encdata.encrypt(inputdata, context);
         encdata.save_to_file("encdata.txt");
 
         nbc_share::PermVec pvec;

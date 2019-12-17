@@ -34,9 +34,20 @@ struct SecureKeyFileManager::Impl
     Impl(const std::string& pubkey_filename,
          const std::string& seckey_filename,
          const std::string& context_filename,
-         const long fheM = DefaultFheM, const long fheL = DefaultFheL)
+         const long fheM,
+         const long fheL,
+         const long fheP,
+         const long fheR,
+         const long fheC,
+         const long fheW,
+         const long fheD)
         : m_(fheM),
-          L_(fheL)
+          l_(fheL),
+          p_(fheP),
+          r_(fheR),
+          c_(fheC),
+          w_(fheW),
+          d_(fheD)
     {
         filenames_.emplace(kKindPubKey,  pubkey_filename);
         filenames_.emplace(kKindSecKey,  seckey_filename);
@@ -47,7 +58,7 @@ struct SecureKeyFileManager::Impl
     void initialize(void)
     {
         helib::FHEcontext context(m_, p_, r_);
-        helib::buildModChain(context, L_, c_);
+        helib::buildModChain(context, l_, c_);
         helib::FHESecKey secretKey(context);
         const helib::FHEPubKey& publicKey = secretKey;
         secretKey.GenSecKey(w_);
@@ -59,7 +70,7 @@ struct SecureKeyFileManager::Impl
 
         std::ostringstream oss;
         oss << "slots=" << slots << ", m=" << m_ << ", p=" << p_
-            << ", r=" << r_ << ", L=" << L_ << ", security=" << security
+            << ", r=" << r_ << ", L=" << l_ << ", security=" << security
             << "PhiM: " << context.zMStar.getPhiM();
         STDSC_LOG_INFO(oss.str().c_str());
 
@@ -108,29 +119,44 @@ struct SecureKeyFileManager::Impl
     std::string filename(const Kind_t kind) const
     {
         return filenames_.at(kind);
-        //return filenames_[kind];
     }
-    
+
+    long plain_mod(void) const
+    {
+        return std::pow(p_, r_);
+    }
+
 private:
     std::unordered_map<Kind_t, std::string> filenames_;
-    long m_ = 11119;
-    long L_ = 180;
-    
-    long p_ = 2;
-    long r_ = 18;
-    long c_ = 3;
-    long w_ = 64;
-    long d_ = 0;
+    const long m_;
+    const long l_;
+    const long p_;
+    const long r_;
+    const long c_;
+    const long w_;
+    const long d_;
 };
 
 SecureKeyFileManager::SecureKeyFileManager(const std::string& pubkey_filename,
                                            const std::string& seckey_filename,
                                            const std::string& context_filename,
-                                           const long fheM, const long fheL)
+                                           const long fheM,
+                                           const long fheL,
+                                           const long fheP,
+                                           const long fheR,
+                                           const long fheC,
+                                           const long fheW,
+                                           const long fheD)
   : pimpl_(new Impl(pubkey_filename,
                     seckey_filename,
                     context_filename,
-                    fheM, fheL))
+                    fheM,
+                    fheL,
+                    fheP,
+                    fheR,
+                    fheC,
+                    fheW,
+                    fheD))
 {
 }
 
@@ -157,6 +183,11 @@ bool SecureKeyFileManager::is_exist(const Kind_t kind) const
 std::string SecureKeyFileManager::filename(const Kind_t kind) const
 {
     return pimpl_->filename(kind);
+}
+
+long SecureKeyFileManager::plain_mod(void) const
+{
+    return pimpl_->plain_mod();
 }
 
 } /* namespace nbc_share */

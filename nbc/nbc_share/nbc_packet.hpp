@@ -38,6 +38,7 @@ enum ControlCode_t : uint64_t
     kControlCodeDataSessionID     = 0x0405,
     kControlCodeDataPermVec       = 0x0406,
     kControlCodeDataCompute       = 0x0407,
+    kControlCodeDataComputeAck    = 0x0408,
 
     /* Code for Download packet: 0x0801-0x08FF */
     kControlCodeDownloadPubkey    = 0x0801,
@@ -45,6 +46,9 @@ enum ControlCode_t : uint64_t
     kControlCodeDownloadSessionID = 0x0803,
     kControlCodeDownloadContext   = 0x0804,
     
+    /* Code for UpDownload packet: 0x1000-0x10FF */
+    kControlCodeGroupUpDownload   = 0x1000,
+    kControlCodeUpDownloadComputeData = 0x1001,
 };
 
 } /* namespace nbc_share */

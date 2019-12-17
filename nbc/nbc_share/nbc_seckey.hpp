@@ -15,49 +15,43 @@
  * limitations under the License.
  */
 
-#ifndef NBC_TA_SRV1_HPP
-#define NBC_TA_SRV1_HPP
+#ifndef NBC_SECKEY_HPP
+#define NBC_SECKEY_HPP
 
-#include <memory>
+#include <iostream>
 #include <string>
+#include <memory>
 
-namespace stdsc
+namespace helib
 {
-class CallbackFunctionContainer;
-class StateContext;
+    class FHEcontext;
+    class FHESecKey;
 }
 
 namespace nbc_share
 {
-class SecureKeyFileManager;
-}
-
-namespace nbc_ta
-{
-namespace srv1
-{
 
 /**
- * @brief Provides Server#1 on TA.
+ * @brief This class is used to hold the secret key.
  */
-class TAServer
+struct SecKey
 {
-public:
-    TAServer(const char* port, stdsc::CallbackFunctionContainer& callback,
-             stdsc::StateContext& state,
-             nbc_share::SecureKeyFileManager& skm);
-    ~TAServer(void) = default;
+    SecKey(const helib::FHEcontext& context);
+    ~SecKey(void) = default;
 
-    void start(void);
-    void stop(void);
-    void wait(void);
+    void save_to_stream(std::ostream& os) const;
+    void load_from_stream(std::istream& is);
+
+    void save_to_file(const std::string& filepath) const;
+    void load_from_file(const std::string& filepath);
+    
+    const helib::FHESecKey& get(void) const;
 
 private:
     struct Impl;
     std::shared_ptr<Impl> pimpl_;
 };
 
-} /* namespace srv1 */
-} /* namespace nbc_ta */
+} /* namespace nbc_share */
 
-#endif /* NBC_TA_SRV1_HPP */
+#endif /* NBC_SECKEY_HPP */

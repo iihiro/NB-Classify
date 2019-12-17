@@ -19,6 +19,7 @@
 #include <cstring>
 #include <cstdlib>
 #include <ctime>
+#include <iostream>
 #include <stdsc/stdsc_buffer.hpp>
 #include <stdsc/stdsc_socket.hpp>
 #include <stdsc/stdsc_packet.hpp>
@@ -30,6 +31,8 @@
 #include <nbc_share/nbc_permvec.hpp>
 #include <nbc_share/nbc_pubkey.hpp>
 #include <nbc_share/nbc_context.hpp>
+#include <nbc_share/nbc_plaindata.hpp>
+#include <nbc_share/nbc_computeparam.hpp>
 #include <nbc_cs/nbc_cs_share_callback_param.hpp>
 #include <nbc_cs/nbc_cs_srv1_callback_function.hpp>
 #include <nbc_cs/nbc_cs_client.hpp>
@@ -194,7 +197,7 @@ DEFUN_DATA(CallbackFunctionComputeRequest)
 
     STDSC_LOG_INFO("Start computing of SessionID#%d", session_id);
     
-    auto& client = param_.get_client();
+    auto& client  = param_.get_client();
     auto& context = client.context();
     
     auto  class_num   = param_.permvec.size();
@@ -233,6 +236,20 @@ DEFUN_DATA(CallbackFunctionComputeRequest)
         ct_diff.multByConstant(NTL::to_ZZ(coeff));
 
         // TAとの処理ループをこの後に書く
+        uint32_t flag = 0;
+        if (j == 1) {
+            flag = COMPUTE_FLAG_BGN;
+        } else if (j == class_num - 1) {
+            flag = COMPUTE_FLAG_END;
+        }
+        nbc_share::ComputeParam cparam;
+        cparam.index      = j;
+        cparam.flag       = flag;
+        cparam.session_id = session_id;
+        
+        auto ct_b = client.compute_on_TA(ct_diff, cparam);
+
+        // 次、ここから
     }
 }
 

@@ -28,8 +28,14 @@ namespace nbc_share
  */
 class SecureKeyFileManager
 {
-    static constexpr long DefaultFheM = 11119;
-    static constexpr long DefaultFheL = 180;
+    static constexpr long DefFheM = 11119;
+    static constexpr long DefFheL = 180;
+
+    static constexpr long DefFheP = 2;
+    static constexpr long DefFheR = 18;
+    static constexpr long DefFheC = 3;
+    static constexpr long DefFheW = 64;
+    static constexpr long DefFheD = 0;
 
 public:
     enum Kind_t : int32_t
@@ -44,7 +50,14 @@ public:
     SecureKeyFileManager(const std::string& pubkey_filename,
                          const std::string& seckey_filename,
                          const std::string& context_filename,
-                         const long fheM = DefaultFheM, const long fheL = DefaultFheL);
+                         const long fheM = DefFheM,
+                         const long fheL = DefFheL,
+                         const long fheP = DefFheP,
+                         const long fheR = DefFheR,
+                         const long fheC = DefFheC,
+                         const long fheW = DefFheW,
+                         const long fheD = DefFheD);
+    
     ~SecureKeyFileManager(void) = default;
 
     void initialize(void);
@@ -56,6 +69,8 @@ public:
     bool is_exist(const Kind_t kind) const;
 
     std::string filename(const Kind_t kind) const;
+
+    long plain_mod(void) const;
 
 private:
     struct Impl;

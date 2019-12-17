@@ -32,15 +32,13 @@ namespace srv1
 struct TAServer::Impl
 {
     Impl(const char* port, stdsc::CallbackFunctionContainer& callback,
-         stdsc::StateContext& state, nbc_share::SecureKeyFileManager& skm,
-         bool is_generate_securekey = false)
-        : server_(new stdsc::Server<>(port, state, callback)), state_(state), skm_(skm)
+         stdsc::StateContext& state,
+         nbc_share::SecureKeyFileManager& skm)
+        : server_(new stdsc::Server<>(port, state, callback)),
+         state_(state),
+         skm_(skm)
     {
         STDSC_LOG_INFO("Lanched TA server#1 (%s)", port);
-
-        if (is_generate_securekey) {
-            skm_.initialize();
-        }
     }
 
     ~Impl(void) = default;
@@ -81,11 +79,10 @@ private:
 };
 
 TAServer::TAServer(const char* port,
-                     stdsc::CallbackFunctionContainer& callback,
-                     stdsc::StateContext& state,
-                     nbc_share::SecureKeyFileManager& skm,
-                     bool is_generate_securekey)
-  : pimpl_(new Impl(port, callback, state, skm, is_generate_securekey))
+                   stdsc::CallbackFunctionContainer& callback,
+                   stdsc::StateContext& state,
+                   nbc_share::SecureKeyFileManager& skm)
+    : pimpl_(new Impl(port, callback, state, skm))
 {
 }
 

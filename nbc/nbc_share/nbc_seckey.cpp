@@ -1,20 +1,15 @@
 #include <fstream>
 #include <stdsc/stdsc_exception.hpp>
-#include <nbc_share/nbc_pubkey.hpp>
+#include <nbc_share/nbc_seckey.hpp>
 #include <nbc_share/nbc_utility.hpp>
 
 #include <helib/FHE.h>
 #include <helib/EncryptedArray.h>
 
-//namespace helib
-//{
-//    class FHEcontext;
-//}
-
 namespace nbc_share
 {
 
-struct PubKey::Impl
+struct SecKey::Impl
 {
     Impl(const helib::FHEcontext& context)
         : context_(context)
@@ -22,13 +17,13 @@ struct PubKey::Impl
 
     void save_to_stream(std::ostream& os) const
     {
-        helib::writePubKeyBinary(os, *data_);
+        helib::writeSecKeyBinary(os, *data_);
     }
     
     void load_from_stream(std::istream& is)
     {
-        data_ = std::make_shared<helib::FHEPubKey>(context_);
-        readPubKeyBinary(is, *data_);
+        data_ = std::make_shared<helib::FHESecKey>(context_);
+        readSecKeyBinary(is, *data_);
     }
     
     void save_to_file(const std::string& filepath) const
@@ -50,41 +45,41 @@ struct PubKey::Impl
         ifs.close();
     }
 
-    const helib::FHEPubKey& get(void) const
+    const helib::FHESecKey& get(void) const
     {
         return *data_;
     }
     
 private:
     const helib::FHEcontext& context_;
-    std::shared_ptr<helib::FHEPubKey>  data_;
+    std::shared_ptr<helib::FHESecKey>  data_;
 };
 
-PubKey::PubKey(const helib::FHEcontext& context)
+SecKey::SecKey(const helib::FHEcontext& context)
     : pimpl_(new Impl(context))
 {}
 
-void PubKey::save_to_stream(std::ostream& os) const
+void SecKey::save_to_stream(std::ostream& os) const
 {
     pimpl_->save_to_stream(os);
 }
 
-void PubKey::load_from_stream(std::istream& is)
+void SecKey::load_from_stream(std::istream& is)
 {
     pimpl_->load_from_stream(is);
 }
 
-void PubKey::save_to_file(const std::string& filepath) const
+void SecKey::save_to_file(const std::string& filepath) const
 {
     pimpl_->save_to_file(filepath);
 }
     
-void PubKey::load_from_file(const std::string& filepath)
+void SecKey::load_from_file(const std::string& filepath)
 {
     pimpl_->load_from_file(filepath);
 }
 
-const helib::FHEPubKey& PubKey::get(void) const
+const helib::FHESecKey& SecKey::get(void) const
 {
     return pimpl_->get();
 }

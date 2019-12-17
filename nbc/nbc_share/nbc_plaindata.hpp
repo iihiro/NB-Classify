@@ -34,32 +34,35 @@ struct PlainData : public nbc_share::BasicData<T>
     
     PlainData() = default;
     virtual ~PlainData(void) = default;
-
-    virtual void save_to_stream(std::ostream& os) const override;
-    //{
-    //    if (vec_.size() == 0) {
-    //        return;
-    //    }
-    //    
-    //    os << vec_.size() << std::endl;
-    //    for (const auto& v : vec_) {
-    //        os << v << std::endl;
-    //    }
-    //}
+#if 1
+    virtual void save_to_stream(std::ostream& os) const override
+    {
+        if (super::vec_.size() == 0) {
+            return;
+        }
+        
+        os << super::vec_.size() << std::endl;
+        for (const auto& v : super::vec_) {
+            os << v << std::endl;
+        }
+    }        
+    virtual void load_from_stream(std::istream& is) override
+    {
+        size_t sz;
+        is >> sz;
     
+        super::clear();
+        
+        for (size_t i=0; i<sz; ++i) {
+            T v;
+            is >> v;
+            super::vec_.push_back(v);
+        }
+    }
+#else
+    virtual void save_to_stream(std::ostream& os) const override;
     virtual void load_from_stream(std::istream& is) override;
-    //{
-    //    size_t sz;
-    //    is >> sz;
-    //    
-    //    clear();
-    //    
-    //    for (size_t i=0; i<sz; ++i) {
-    //        T v;
-    //        is >> v;
-    //        vec_.push_back(v);
-    //    }
-    //}
+#endif    
 };
 
 } /* namespace nbc_share */

@@ -30,6 +30,7 @@ namespace nbc_share
 {
 
 class PubKey;
+class SecKey;
 class Context;
     
 /**
@@ -38,30 +39,21 @@ class Context;
 struct EncData : public nbc_share::BasicData<helib::Ctxt>
 {
     EncData(const PubKey& pubkey);
-    //EncData(const PubKey& pubkey,
-    //        const helib::Ctxt& ctxt);
     virtual ~EncData(void) = default;
 
-    void push(const std::vector<long>& inputdata,
-              const Context& context);
+    void encrypt(const std::vector<long>& inputdata,
+                 const Context& context);
 
-    //void push(const helib::Ctxt& ctxt);
-
-    //void clear(void);
+    void decrypt(const nbc_share::Context& context,
+                 const nbc_share::SecKey& seckey,
+                 std::vector<long>& outputdata) const;
+    
+    //void pop(const nbc_share::Context& context,
+    //         const nbc_share::SecKey& seckey,
+    //         std::vector<long>& outputdata);
 
     virtual void save_to_stream(std::ostream& os) const override;
     virtual void load_from_stream(std::istream& is) override;
-
-    //void save_to_file(const std::string& filepath) const;
-    //void load_from_file(const std::string& filepath);
-    
-    //const helib::Ctxt& data(void) const;
-    //helib::Ctxt& data(void);
-    
-    //const std::vector<helib::Ctxt>& vdata(void) const;
-    //std::vector<helib::Ctxt>& vdata(void);
-
-    //size_t stream_size(void) const;
 
 private:
     struct Impl;

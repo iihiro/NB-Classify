@@ -29,6 +29,8 @@
 #include <nbc_share/nbc_pubkey.hpp>
 #include <nbc_share/nbc_context.hpp>
 #include <nbc_share/nbc_encdata.hpp>
+#include <nbc_share/nbc_plaindata.hpp>
+#include <nbc_share/nbc_computeparam.hpp>
 #include <nbc_cs/nbc_cs_ta_client.hpp>
 #include <nbc_cs/nbc_cs_client.hpp>
 #include <helib/FHE.h>
@@ -72,37 +74,36 @@ struct Client::Impl
     {
         return *context_;
     }
-    
-    //int32_t create_session(std::function<void(const int64_t result, void* args)> result_cb_func,
-    //                       void* result_cb_args)
-    //{
-    //    result_cb_.func = result_cb_func;
-    //    result_cb_.args = result_cb_args;
-    //    return cs_client_->send_session_create();
-    //}
-    //
-    //void compute(const int32_t session_id,
-    //             const std::vector<long>& data,
-    //             const size_t class_num)
-    //{
-    //    auto& context = *context_;
-    //    auto& pubkey  = *pubkey_;
-    //    
-    //    auto& context_data = context.get();
-    //    const auto num_slots = context_data.zMStar.getNSlots();
-    //    std::vector<long> inputdata(num_slots);
-    //    std::copy(data.begin(), data.end(), inputdata.begin());
-    //    
-    //    STDSC_LOG_DEBUG("data.size=%lu, inputdata.size=%lu", data.size(),inputdata.size());
-    //
-    //    nbc_share::EncData enc_input(pubkey, context);
-    //    enc_input.generate(inputdata);
-    //
-    //    cs_client_->send_enc_input(session_id, enc_input);
-    //    
-    //    auto& cbfunc = result_cb_.func;
-    //    cbfunc(123, result_cb_.args);
-    //}
+
+    helib::Ctxt compute_on_TA(const helib::Ctxt& ct_diff,
+                              const nbc_share::ComputeParam& cparam)
+    {
+        nbc_share::EncData encdata(pubkey());
+        encdata.push(ct_diff);
+        nbc_share::PlainData<nbc_share::ComputeParam> plaindata;
+        plaindata.push(cparam);
+
+        auto sz = encdata.stream_size() + plaindata.stream_size();
+        stdsc::BufferStream bufferstream(sz);
+        std::iostream stream(&bufferstream);
+
+        encdata.save_to_stream(stream);
+        plaindata.save_to_stream(stream);
+
+        stdsc::Buffer* sbuffer = &bufferstream;
+        stdsc::Buffer rbuffer;
+
+        ta_client_->compute(*sbuffer, rbuffer);
+
+        nbc_share::EncData encresult(pubkey());
+        {
+            stdsc::BufferStream bufferstream(rbuffer);
+            std::iostream stream(&bufferstream);
+            encresult.load_from_stream(stream);
+        }
+
+        return encresult.data();
+    }
 
 private:
     std::shared_ptr<TAClient> ta_client_;
@@ -131,17 +132,10 @@ const nbc_share::Context& Client::context(void) const
     return pimpl_->context();
 }
 
-//int32_t Client::create_session(std::function<void(const int64_t result, void* args)> result_cb_func,
-//                               void* result_cb_args)
-//{
-//    return pimpl_->create_session(result_cb_func, result_cb_args);
-//}
-//    
-//void Client::compute(const int32_t session_id,
-//                     const std::vector<long>& data,
-//                     const size_t class_num)
-//{
-//    pimpl_->compute(session_id, data, class_num);
-//}
+helib::Ctxt Client::compute_on_TA(const helib::Ctxt& ct_diff,
+                                  const nbc_share::ComputeParam& cparam)
+{
+    return pimpl_->compute_on_TA(ct_diff, cparam);
+}
     
 } /* namespace nbc_cs */

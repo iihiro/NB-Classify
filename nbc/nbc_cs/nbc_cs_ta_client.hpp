@@ -36,6 +36,9 @@ public:
     TAClient(const char* host, const char* port);
     virtual ~TAClient(void) = default;
 
+    void compute(const stdsc::Buffer& sbuffer,
+                 stdsc::Buffer& rbuffer);
+    
 private:
     struct Impl;
     std::shared_ptr<Impl> pimpl_;

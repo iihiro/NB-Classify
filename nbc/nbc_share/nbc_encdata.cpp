@@ -1,8 +1,10 @@
 #include <vector>
 #include <stdsc/stdsc_exception.hpp>
+#include <stdsc/stdsc_log.hpp>
 #include <nbc_share/nbc_utility.hpp>
 #include <nbc_share/nbc_encdata.hpp>
 #include <nbc_share/nbc_pubkey.hpp>
+#include <nbc_share/nbc_seckey.hpp>
 #include <nbc_share/nbc_context.hpp>
 
 #include <helib/FHE.h>
@@ -16,7 +18,7 @@ struct EncData::Impl
     Impl(const PubKey& pubkey)
         : pubkey_(pubkey)
     {}
-    
+
     const PubKey&  pubkey_;
 };
 
@@ -24,8 +26,8 @@ EncData::EncData(const PubKey& pubkey)
     : pimpl_(new Impl(pubkey))
 {}
 
-void EncData::push(const std::vector<long>& inputdata,
-                   const Context& context)
+void EncData::encrypt(const std::vector<long>& inputdata,
+                      const Context& context)
 {
     auto& context_data = context.get();
     auto& pubkey_data  = pimpl_->pubkey_.get();
@@ -38,6 +40,33 @@ void EncData::push(const std::vector<long>& inputdata,
         
     vec_.push_back(ctxt);
 }
+
+void EncData::decrypt(const Context& context,
+                      const SecKey& seckey,
+                      std::vector<long>& outputdata) const
+{
+    if (vec_.size() == 0) {
+        STDSC_LOG_WARN("data is empty.");
+        return;
+    }
+    
+    auto& context_data = context.get();
+    auto& seckey_data  = seckey.get();
+
+    NTL::ZZX G = context_data.alMod.getFactorsOverZZ()[0];
+    helib::EncryptedArray ea(context_data, G);
+
+    auto& v = vec_.at(0);
+    ea.decrypt(v, seckey_data, outputdata);
+}
+
+//void EncData::pop(const Context& context,
+//                  const SecKey& seckey,
+//                  std::vector<long>& outputdata)
+//{
+//    peek(context, seckey, outputdata);
+//    vec_.erase(vec_.begin());
+//}
 
 void EncData::save_to_stream(std::ostream& os) const
 {

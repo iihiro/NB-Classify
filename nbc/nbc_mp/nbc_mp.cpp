@@ -113,7 +113,7 @@ struct ModelProvider::Impl
             printf("\n");
 #endif
             
-            encdata.push(tmp, context);
+            encdata.encrypt(tmp, context);
         }
 
         encdata.save_to_file("encmodel.txt");

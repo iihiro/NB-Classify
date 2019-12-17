@@ -42,6 +42,14 @@ struct TAClient::Impl
     ~Impl(void)
     {}
 
+    void compute(const stdsc::Buffer& sbuffer,
+                 stdsc::Buffer& rbuffer)
+    {
+        client_.send_recv_data_blocking(
+            nbc_share::ControlCode_t::kControlCodeUpDownloadComputeData,
+            sbuffer, rbuffer);
+    }
+    
 private:
     stdsc::Client& client_;
 };
@@ -52,5 +60,12 @@ TAClient::TAClient(const char* host, const char* port)
     auto& client = super::client();
     pimpl_ = std::make_shared<Impl>(client);
 }
+
+void TAClient::compute(const stdsc::Buffer& sbuffer,
+                       stdsc::Buffer& rbuffer)
+{
+    pimpl_->compute(sbuffer, rbuffer);
+}
+
 
 } /* namespace nbc_cs */

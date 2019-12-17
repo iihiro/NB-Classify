@@ -24,6 +24,9 @@
 #include <stdsc/stdsc_log.hpp>
 #include <nbc_share/nbc_packet.hpp>
 #include <nbc_share/nbc_securekey_filemanager.hpp>
+#include <nbc_share/nbc_context.hpp>
+#include <nbc_share/nbc_pubkey.hpp>
+#include <nbc_share/nbc_seckey.hpp>
 #include <nbc_ta/nbc_ta_srv1.hpp>
 #include <nbc_ta/nbc_ta_srv1_state.hpp>
 #include <nbc_ta/nbc_ta_srv1_callback_function.hpp>
@@ -98,7 +101,17 @@ static void exec(const Option& opt)
             new nbc_share::SecureKeyFileManager(opt.pubkey_filename,
                                                 opt.seckey_filename,
                                                 opt.context_filename));
+        if (opt.is_generate_securekey) {
+            skm_ptr->initialize();
+        }
         cb_param.set_skm(skm_ptr);
+
+        cb_param.context_ptr = std::make_shared<nbc_share::Context>();
+        cb_param.context_ptr->load_from_file(opt.context_filename);
+        cb_param.pubkey_ptr = std::make_shared<nbc_share::PubKey>(cb_param.context_ptr->get());
+        cb_param.pubkey_ptr->load_from_file(opt.pubkey_filename);
+        cb_param.seckey_ptr = std::make_shared<nbc_share::SecKey>(cb_param.context_ptr->get());
+        cb_param.seckey_ptr->load_from_file(opt.seckey_filename);
         
         std::shared_ptr<stdsc::CallbackFunction> cb_pubkey(
             new nbc_ta::srv1::CallbackFunctionPubkeyRequest(cb_param));
@@ -114,7 +127,7 @@ static void exec(const Option& opt)
     }
 
     std::shared_ptr<nbc_ta::srv1::TAServer> server1 = std::make_shared<nbc_ta::srv1::TAServer>(
-        PORT_TA_SRV1, callback1, state1, cb_param.get_skm(), opt.is_generate_securekey);
+        PORT_TA_SRV1, callback1, state1, cb_param.get_skm());
     server1->start();
 
     std::string key;

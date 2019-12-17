@@ -33,9 +33,19 @@ namespace srv2
 using CallbackParam = nbc_ta::CallbackParam;
 
 /**
+ * @brief Provides callback function in receiving pubic key request.
+ */
+DECLARE_DOWNLOAD_CLASS(CallbackFunctionSessionCreate);
+
+/**
  * @brief Provides callback function in receiving begin computing.
  */
-DECLARE_DATA_CLASS(CallbackFunctionBeginComputing);
+DECLARE_REQUEST_CLASS(CallbackFunctionBeginComputing);
+
+/**
+ * @brief Provides callback function in receiving compute data.
+ */
+DECLARE_UPDOWNLOAD_CLASS(CallbackFunctionCompute);
 
 } /* namespace srv2 */
 } /* namespace nbc_ta */

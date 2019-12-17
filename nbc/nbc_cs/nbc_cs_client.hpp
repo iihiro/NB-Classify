@@ -21,10 +21,16 @@
 #include <memory>
 #include <nbc_share/nbc_define.hpp>
 
+namespace helib
+{
+class Ctxt;
+}
+
 namespace nbc_share
 {
 class PubKey;
 class Context;
+class ComputeParam;
 }
 
 namespace nbc_cs
@@ -46,12 +52,9 @@ public:
 
     const nbc_share::PubKey&  pubkey(void)  const;
     const nbc_share::Context& context(void) const;
-    
-    //int32_t create_session(std::function<void(const int64_t result, void* args)> result_cb, void* args);
-    //
-    //void compute(const int32_t session_id,
-    //             const std::vector<long>& data,
-    //             const size_t class_num);
+
+    helib::Ctxt compute_on_TA(const helib::Ctxt& ct_diff,
+                              const nbc_share::ComputeParam& cparam);
     
 private:
     struct Impl;

@@ -25,11 +25,9 @@
 namespace nbc_ta
 {
 
-// 次、これをunorderd_mapのvalueのint64_tと置き換えるところから
 struct SessionContext
 {
     int64_t result_index;
-    int32_t class_num;
 };
 
 struct CallbackParam::Impl
@@ -51,21 +49,21 @@ struct CallbackParam::Impl
 
     void set_result(const int32_t session_id, const int64_t result_index)
     {
-        resultmap_[session_id] = result_index;
+        sessions_[session_id].result_index = result_index;
     }
     
     int64_t get_result(const int32_t session_id) const
     {
         int32_t result_index = -1;
-        if (resultmap_.count(session_id)) {
-            result_index = resultmap_.at(session_id);
+        if (sessions_.count(session_id)) {
+            result_index = sessions_.at(session_id).result_index;
         }
         return result_index;
     }
 
 private:
     std::shared_ptr<nbc_share::SecureKeyFileManager> skm_;
-    std::unordered_map<int32_t, int64_t> resultmap_;
+    std::unordered_map<int32_t, SessionContext> sessions_;
 };
 
 CallbackParam::CallbackParam(void) : pimpl_(new Impl())

@@ -36,7 +36,7 @@ template <class T>
 struct BasicData
 {
     BasicData(void) = default;
-    ~BasicData(void) = default;
+    virtual ~BasicData(void) = default;
 
     virtual void push(const T& data)
     {
