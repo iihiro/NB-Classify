@@ -19,7 +19,6 @@
 #define NBC_CLIENT_HPP
 
 #include <memory>
-//#include <string>
 #include <vector>
 #include <functional>
 #include <nbc_share/nbc_define.hpp>

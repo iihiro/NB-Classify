@@ -76,7 +76,7 @@ static void exec(const Option& opt)
         cb_param.encmodel_filename = ENCMODEL_FILENAME;
         
         std::shared_ptr<nbc_cs::Client> client(
-            new nbc_cs::Client(host, PORT_TA_SRV1));
+            new nbc_cs::Client(host, PORT_TA_SRV1, PORT_TA_SRV2));
         cb_param.set_client(client);
         
         std::shared_ptr<stdsc::CallbackFunction> cb_session(

@@ -27,10 +27,11 @@
 #include <nbc_share/nbc_context.hpp>
 #include <nbc_share/nbc_pubkey.hpp>
 #include <nbc_share/nbc_seckey.hpp>
-#include <nbc_ta/nbc_ta_srv1.hpp>
 #include <nbc_ta/nbc_ta_srv1_state.hpp>
 #include <nbc_ta/nbc_ta_srv1_callback_function.hpp>
 #include <nbc_ta/nbc_ta_srv2_state.hpp>
+#include <nbc_ta/nbc_ta_srv2_callback_function.hpp>
+#include <nbc_ta/nbc_ta_srv.hpp>
 #include <nbc_ta/nbc_ta_share_callback_param.hpp>
 #include <share/define.hpp>
 
@@ -90,52 +91,91 @@ void init(Option& param, int argc, char* argv[])
 #endif
 }
 
-static void exec(const Option& opt)
+static std::shared_ptr<nbc_ta::TAServer>
+start_srv1_async(nbc_ta::CallbackParam& cb_param)
 {
-    stdsc::StateContext state1(std::make_shared<nbc_ta::srv1::StateReady>());
+    stdsc::StateContext state(std::make_shared<nbc_ta::srv1::StateReady>());
 
-    stdsc::CallbackFunctionContainer callback1;
-    nbc_ta::CallbackParam cb_param;
+    stdsc::CallbackFunctionContainer callback;
     {
-        std::shared_ptr<nbc_share::SecureKeyFileManager> skm_ptr(
-            new nbc_share::SecureKeyFileManager(opt.pubkey_filename,
-                                                opt.seckey_filename,
-                                                opt.context_filename));
-        if (opt.is_generate_securekey) {
-            skm_ptr->initialize();
-        }
-        cb_param.set_skm(skm_ptr);
-
-        cb_param.context_ptr = std::make_shared<nbc_share::Context>();
-        cb_param.context_ptr->load_from_file(opt.context_filename);
-        cb_param.pubkey_ptr = std::make_shared<nbc_share::PubKey>(cb_param.context_ptr->get());
-        cb_param.pubkey_ptr->load_from_file(opt.pubkey_filename);
-        cb_param.seckey_ptr = std::make_shared<nbc_share::SecKey>(cb_param.context_ptr->get());
-        cb_param.seckey_ptr->load_from_file(opt.seckey_filename);
-        
         std::shared_ptr<stdsc::CallbackFunction> cb_pubkey(
             new nbc_ta::srv1::CallbackFunctionPubkeyRequest(cb_param));
-        callback1.set(nbc_share::kControlCodeDownloadPubkey, cb_pubkey);
+        callback.set(nbc_share::kControlCodeDownloadPubkey, cb_pubkey);
         
         std::shared_ptr<stdsc::CallbackFunction> cb_context(
             new nbc_ta::srv1::CallbackFunctionContextRequest(cb_param));
-        callback1.set(nbc_share::kControlCodeDownloadContext, cb_context);
+        callback.set(nbc_share::kControlCodeDownloadContext, cb_context);
         
         std::shared_ptr<stdsc::CallbackFunction> cb_result(
             new nbc_ta::srv1::CallbackFunctionResultRequest(cb_param));
-        callback1.set(nbc_share::kControlCodeDownloadResult, cb_result);
+        callback.set(nbc_share::kControlCodeDownloadResult, cb_result);
     }
 
-    std::shared_ptr<nbc_ta::srv1::TAServer> server1 = std::make_shared<nbc_ta::srv1::TAServer>(
-        PORT_TA_SRV1, callback1, state1, cb_param.get_skm());
-    server1->start();
+    std::shared_ptr<nbc_ta::TAServer> server = std::make_shared<nbc_ta::TAServer>(
+        PORT_TA_SRV1, callback, state, cb_param.get_skm());
+    server->start();
 
-    std::string key;
-    std::cout << "hit any key to exit server: " << std::endl;
-    std::cin >> key;
+    return server;
+}    
 
-    server1->stop();
+static std::shared_ptr<nbc_ta::TAServer>
+start_srv2_async(nbc_ta::CallbackParam& cb_param)
+{
+    stdsc::StateContext state(std::make_shared<nbc_ta::srv2::StateReady>());
+
+    stdsc::CallbackFunctionContainer callback;
+    {
+        std::shared_ptr<stdsc::CallbackFunction> cb_session(
+            new nbc_ta::srv2::CallbackFunctionSessionCreate(cb_param));
+        callback.set(nbc_share::kControlCodeDownloadSessionID, cb_session);
+        
+        std::shared_ptr<stdsc::CallbackFunction> cb_begin(
+            new nbc_ta::srv2::CallbackFunctionBeginComputing(cb_param));
+        callback.set(nbc_share::kControlCodeRequestCompute, cb_begin);
+        
+        std::shared_ptr<stdsc::CallbackFunction> cb_compute(
+            new nbc_ta::srv2::CallbackFunctionCompute(cb_param));
+        callback.set(nbc_share::kControlCodeUpDownloadComputeData, cb_compute);
+    }
+
+    std::shared_ptr<nbc_ta::TAServer> server = std::make_shared<nbc_ta::TAServer>(
+        PORT_TA_SRV2, callback, state, cb_param.get_skm());
+    server->start();
+
+    return server;
+}    
+
+static void exec(const Option& opt)
+{
+    std::shared_ptr<nbc_share::SecureKeyFileManager> skm_ptr(
+        new nbc_share::SecureKeyFileManager(opt.pubkey_filename,
+                                            opt.seckey_filename,
+                                            opt.context_filename));
+    
+    if (opt.is_generate_securekey) {
+        skm_ptr->initialize();
+    }
+
+    nbc_ta::CallbackParam cb_param;
+    cb_param.set_skm(skm_ptr);
+    cb_param.context_ptr = std::make_shared<nbc_share::Context>();
+    cb_param.context_ptr->load_from_file(opt.context_filename);
+    cb_param.pubkey_ptr = std::make_shared<nbc_share::PubKey>(cb_param.context_ptr->get());
+    cb_param.pubkey_ptr->load_from_file(opt.pubkey_filename);
+    cb_param.seckey_ptr = std::make_shared<nbc_share::SecKey>(cb_param.context_ptr->get());
+    cb_param.seckey_ptr->load_from_file(opt.seckey_filename);
+    
+    auto server1 = start_srv1_async(cb_param);
+    auto server2 = start_srv2_async(cb_param);
+
+    //std::string key;
+    //std::cout << "hit any key to exit server: " << std::endl;
+    //std::cin >> key;
+    //
+    //server1->stop();
+    //server2->stop();
     server1->wait();
+    server2->wait();
 }    
 
 int main(int argc, char* argv[])

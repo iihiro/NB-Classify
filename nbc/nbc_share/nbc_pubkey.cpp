@@ -1,5 +1,6 @@
 #include <fstream>
 #include <stdsc/stdsc_exception.hpp>
+#include <stdsc/stdsc_log.hpp>
 #include <nbc_share/nbc_pubkey.hpp>
 #include <nbc_share/nbc_utility.hpp>
 
@@ -28,6 +29,7 @@ struct PubKey::Impl
     void load_from_stream(std::istream& is)
     {
         data_ = std::make_shared<helib::FHEPubKey>(context_);
+        STDSC_LOG_INFO("reading public key.");
         readPubKeyBinary(is, *data_);
     }
     

@@ -15,8 +15,8 @@
  * limitations under the License.
  */
 
-#ifndef NBC_TA_SRV1_HPP
-#define NBC_TA_SRV1_HPP
+#ifndef NBC_TA_SRV_HPP
+#define NBC_TA_SRV_HPP
 
 #include <memory>
 #include <string>
@@ -34,11 +34,9 @@ class SecureKeyFileManager;
 
 namespace nbc_ta
 {
-namespace srv1
-{
 
 /**
- * @brief Provides Server#1 on TA.
+ * @brief Provides TA Server.
  */
 class TAServer
 {
@@ -57,7 +55,6 @@ private:
     std::shared_ptr<Impl> pimpl_;
 };
 
-} /* namespace srv1 */
 } /* namespace nbc_ta */
 
-#endif /* NBC_TA_SRV1_HPP */
+#endif /* NBC_TA_SRV_HPP */

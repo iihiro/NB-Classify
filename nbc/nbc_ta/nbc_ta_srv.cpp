@@ -22,11 +22,9 @@
 #include <nbc_share/nbc_utility.hpp>
 #include <nbc_share/nbc_securekey_filemanager.hpp>
 #include <nbc_ta/nbc_ta_srv1_state.hpp>
-#include <nbc_ta/nbc_ta_srv1.hpp>
+#include <nbc_ta/nbc_ta_srv.hpp>
 
 namespace nbc_ta
-{
-namespace srv1
 {
 
 struct TAServer::Impl
@@ -35,10 +33,10 @@ struct TAServer::Impl
          stdsc::StateContext& state,
          nbc_share::SecureKeyFileManager& skm)
         : server_(new stdsc::Server<>(port, state, callback)),
-         state_(state),
-         skm_(skm)
+          state_(state),
+          skm_(skm)
     {
-        STDSC_LOG_INFO("Lanched TA server#1 (%s)", port);
+        STDSC_LOG_INFO("Lanched TA server (%s)", port);
     }
 
     ~Impl(void) = default;
@@ -101,5 +99,4 @@ void TAServer::wait(void)
     pimpl_->wait();
 }
 
-} /* namespace srv1 */
 } /* namespace nbc_ta */

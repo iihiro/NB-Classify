@@ -195,7 +195,7 @@ DEFUN_DATA(CallbackFunctionComputeRequest)
     auto* p          = static_cast<const uint8_t*>(buffer.data());
     auto  session_id = *reinterpret_cast<const int32_t*>(p + 0);
 
-    STDSC_LOG_INFO("Start computing of SessionID#%d", session_id);
+    STDSC_LOG_INFO("start computing of session#%d", session_id);
     
     auto& client  = param_.get_client();
     auto& context = client.context();
@@ -216,26 +216,29 @@ DEFUN_DATA(CallbackFunctionComputeRequest)
         totalSums(ea, res);
         res_ctxts.push_back(res);
     }
-    STDSC_LOG_INFO("Finished calculating probability of each class");
+    STDSC_LOG_TRACE("finished calculating probability of each class");
 
     std::vector<helib::Ctxt> permed;
     for (size_t j=0; j<permvec.size(); ++j) {
         permed.push_back(res_ctxts[permvec[j]]);
     }
-    STDSC_LOG_INFO("Permuted the probability ciphertexts");
+    STDSC_LOG_TRACE("Permuted the probability ciphertexts");
 
     helib::Ctxt max = permed[0];
 
     std::srand(std::time(nullptr));
     
     for (size_t j=1; j<class_num; ++j) {
+        STDSC_LOG_INFO("computation loop (%lu / %lu)",
+                       j, class_num);
+
         auto coeff = (std::rand() % 100) + 1;
         auto ct_diff = permed[j];
         auto tmp = max;
         ct_diff -= tmp;
         ct_diff.multByConstant(NTL::to_ZZ(coeff));
+        STDSC_LOG_TRACE("computed ct_diff");
 
-        // TAとの処理ループをこの後に書く
         uint32_t flag = 0;
         if (j == 1) {
             flag = COMPUTE_FLAG_BGN;
@@ -246,10 +249,18 @@ DEFUN_DATA(CallbackFunctionComputeRequest)
         cparam.index      = j;
         cparam.flag       = flag;
         cparam.session_id = session_id;
+        STDSC_LOG_TRACE("created compute param (index:%lu, flag:0x%04x, session:%d)",
+                        j, flag, session_id);
         
         auto ct_b = client.compute_on_TA(ct_diff, cparam);
-
-        // 次、ここから
+        
+        helib::Ctxt cur_max = max;
+        max = permed[j];
+        max.multiplyBy(ct_b);
+        helib::Ctxt ct_temp = ct_b;
+        ct_temp.addConstant(NTL::to_ZZ(-1));
+        ct_temp.multiplyBy(cur_max);
+        max -= ct_temp;
     }
 }
 

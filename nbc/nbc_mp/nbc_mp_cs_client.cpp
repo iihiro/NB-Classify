@@ -64,7 +64,7 @@ struct CSClient::Impl
         std::iostream stream(&buffstream);
         encdata.save_to_stream(stream);
 
-        STDSC_LOG_INFO("Sending encrypted input.");
+        STDSC_LOG_INFO("Sending encrypted model.");
         stdsc::Buffer* buffer = &buffstream;
         client_.send_data_blocking(nbc_share::kControlCodeDataModel, *buffer);
     }

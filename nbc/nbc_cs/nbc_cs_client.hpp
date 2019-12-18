@@ -44,7 +44,9 @@ class Dataset;
 class Client
 {
 public:
-    Client(const char* ta_host, const char* ta_port,
+    Client(const char* ta_host,
+           const char* ta_srv1_port,
+           const char* ta_srv2_port,
            const bool dl_pubkey = true,
            const uint32_t retry_interval_usec = NBC_RETRY_INTERVAL_USEC,
            const uint32_t timeout_sec = NBC_TIMEOUT_SEC);

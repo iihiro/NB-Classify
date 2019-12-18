@@ -1,5 +1,6 @@
 #include <fstream>
 #include <stdsc/stdsc_exception.hpp>
+#include <stdsc/stdsc_log.hpp>
 #include <nbc_share/nbc_context.hpp>
 #include <nbc_share/nbc_utility.hpp>
 
@@ -9,17 +10,6 @@
 namespace nbc_share
 {
 
-//helib::FHEcontext readContext(std::ifstream& ifs) {
-//    unsigned long m1, p1, r1;
-//    std::vector<long> gens, ords;
-//    helib::readContextBaseBinary(ifs, m1, p1, r1, gens, ords);
-//    helib::FHEcontext context(m1, p1, r1, gens, ords);
-//    helib::readContextBinary(ifs, context);
-//    ifs.close();
-//    return context;
-//}
-
-    
 struct Context::Impl
 {
     Impl()
@@ -27,12 +17,15 @@ struct Context::Impl
 
     void save_to_stream(std::ostream& os) const
     {
+        STDSC_LOG_WARN("%s is not implemented.", __FUNCTION__);
     }
     
     void load_from_stream(std::istream& is)
     {
         unsigned long m1, p1, r1;
         std::vector<long> gens, ords;
+
+        STDSC_LOG_INFO("reading context.");
         helib::readContextBaseBinary(is, m1, p1, r1, gens, ords);
         
         data_ = std::make_shared<helib::FHEcontext>(m1, p1, r1, gens, ords);
@@ -41,6 +34,7 @@ struct Context::Impl
     
     void save_to_file(const std::string& filepath) const
     {
+        STDSC_LOG_WARN("%s is not implemented.", __FUNCTION__);
     }
     
     void load_from_file(const std::string& filepath)

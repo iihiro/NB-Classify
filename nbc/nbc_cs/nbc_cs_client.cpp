@@ -41,28 +41,33 @@ namespace nbc_cs
     
 struct Client::Impl
 {
-    Impl(const char* ta_host, const char* ta_port,
+    Impl(const char* ta_host,
+         const char* ta_srv1_port,
+         const char* ta_srv2_port,
          const bool dl_pubkey,
          const uint32_t retry_interval_usec,
          const uint32_t timeout_sec)
-        : ta_client_(new TAClient(ta_host, ta_port)),
+        : ta_srv1_client_(new TAClient(ta_host, ta_srv1_port)),
+          ta_srv2_client_(new TAClient(ta_host, ta_srv2_port)),
           retry_interval_usec_(retry_interval_usec),
           timeout_sec_(timeout_sec)
     {
         STDSC_IF_CHECK(dl_pubkey, "False of dl_pubkey is not supported yet.");
 
-        ta_client_->connect(retry_interval_usec_, timeout_sec_);
+        ta_srv1_client_->connect(retry_interval_usec_, timeout_sec_);
+        ta_srv2_client_->connect(retry_interval_usec_, timeout_sec_);
 
         context_ = std::make_shared<nbc_share::Context>();
-        ta_client_->get_context(*context_);
+        ta_srv1_client_->get_context(*context_);
         
         pubkey_ = std::make_shared<nbc_share::PubKey>(context_->get());
-        ta_client_->get_pubkey(*pubkey_);
+        ta_srv1_client_->get_pubkey(*pubkey_);
     }
 
     ~Impl(void)
     {
-        ta_client_->disconnect();
+        ta_srv1_client_->disconnect();
+        ta_srv2_client_->disconnect();
     }
 
     const nbc_share::PubKey& pubkey(void) const
@@ -90,11 +95,17 @@ struct Client::Impl
         encdata.save_to_stream(stream);
         plaindata.save_to_stream(stream);
 
+        STDSC_LOG_TRACE("created packet for TA");
+
         stdsc::Buffer* sbuffer = &bufferstream;
         stdsc::Buffer rbuffer;
 
-        ta_client_->compute(*sbuffer, rbuffer);
+        STDSC_LOG_TRACE("sending packet to TA");
 
+        ta_srv2_client_->compute(*sbuffer, rbuffer);
+
+        STDSC_LOG_TRACE("received result from TA");
+        
         nbc_share::EncData encresult(pubkey());
         {
             stdsc::BufferStream bufferstream(rbuffer);
@@ -106,18 +117,21 @@ struct Client::Impl
     }
 
 private:
-    std::shared_ptr<TAClient> ta_client_;
+    std::shared_ptr<TAClient> ta_srv1_client_;
+    std::shared_ptr<TAClient> ta_srv2_client_;
     const uint32_t retry_interval_usec_;
     const uint32_t timeout_sec_;
     std::shared_ptr<nbc_share::Context> context_;
     std::shared_ptr<nbc_share::PubKey> pubkey_;
 };
 
-Client::Client(const char* ta_host, const char* ta_port,
+Client::Client(const char* ta_host,
+               const char* ta_srv1_port,
+               const char* ta_srv2_port,
                const bool dl_pubkey,
                const uint32_t retry_interval_usec,
                const uint32_t timeout_sec)
-    : pimpl_(new Impl(ta_host, ta_port,
+    : pimpl_(new Impl(ta_host, ta_srv1_port, ta_srv2_port,
                       dl_pubkey, retry_interval_usec, timeout_sec))
 {
 }
