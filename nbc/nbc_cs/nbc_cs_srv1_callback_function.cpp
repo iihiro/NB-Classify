@@ -38,6 +38,9 @@
 #include <nbc_cs/nbc_cs_client.hpp>
 #include <nbc_cs/nbc_cs_srv1_state.hpp>
 
+// for debug by iiz, to be removed
+#include <nbc_share/nbc_seckey.hpp>
+
 #include <helib/FHE.h>
 #include <helib/EncryptedArray.h>
 
@@ -220,6 +223,21 @@ DEFUN_DATA(CallbackFunctionComputeRequest)
         res.multiplyBy(ct_data);
         totalSums(ea, res);
         res_ctxts.push_back(res);
+#if 1 //debug by iiz
+        {
+            nbc_share::SecKey seckey(context_data);
+            seckey.load_from_file("../../../testdata/sk_m11119_p2_L180.bin");
+            auto& seckey_data = seckey.get();
+
+            NTL::ZZX G = context_data.alMod.getFactorsOverZZ()[0];
+            helib::EncryptedArray ea(context_data, G);
+            
+            std::vector <long> m;
+            ea.decrypt(res, seckey_data, m);
+            printf("res_ctxts[%ld]: sz:%ld, [0]:%ld\n",
+                   j, m.size(), m[0]);
+        }
+#endif
     }
     STDSC_LOG_TRACE("finished calculating probability of each class");
 
@@ -239,19 +257,41 @@ DEFUN_DATA(CallbackFunctionComputeRequest)
         STDSC_LOG_INFO("computation loop (%lu / %lu)",
                        j, class_num);
 
+#if 1 // debug by iiz
+        auto coeff = 10;
+#else
         auto coeff = (std::rand() % 100) + 1;
+#endif
         auto ct_diff = permed[j];
         auto tmp = max;
         ct_diff -= tmp;
         ct_diff.multByConstant(NTL::to_ZZ(coeff));
         STDSC_LOG_TRACE("computed ct_diff");
 
-        uint32_t flag = 0;
-        if (j == 1) {
-            flag = COMPUTE_FLAG_BGN;
-        } else if (j == class_num - 1) {
-            flag = COMPUTE_FLAG_END;
+#if 1 // debug by iiz
+        {
+            nbc_share::SecKey seckey(context_data);
+            seckey.load_from_file("../../../testdata/sk_m11119_p2_L180.bin");
+            auto& seckey_data = seckey.get();
+
+            NTL::ZZX G = context_data.alMod.getFactorsOverZZ()[0];
+            helib::EncryptedArray ea(context_data, G);
+            
+            std::vector <long> m;
+            ea.decrypt(max, seckey_data, m);
+            std::vector<long> p;
+            ea.decrypt(permed[j], seckey_data, p);
+            printf("j:%ld, max: sz:%ld, [0]:%ld, permed[j]: sz:%ld, [0]:%ld\n",
+                   j, m.size(), m[0], p.size(), p[0]);
         }
+#endif
+
+        uint32_t flag = 0;
+        //if (j == 1) {
+        //    flag = COMPUTE_FLAG_BGN;
+        //} else if (j == class_num - 1) {
+        //    flag = COMPUTE_FLAG_END;
+        //}
         nbc_share::ComputeParam cparam;
         cparam.index      = j;
         cparam.flag       = flag;

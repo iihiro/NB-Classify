@@ -90,8 +90,6 @@ struct Client::Impl
         cbmap_[session_id] = rcb;
         cbmap_[session_id].thread->start(cbmap_[session_id].param);
         
-        STDSC_LOG_TRACE("launched result thread for session#%d", session_id);
-
         return session_id;
     }
     

@@ -58,6 +58,10 @@ long compute(const nbc_share::EncData& enc_diff,
     long new_index = last_index;;
 
     enc_diff.decrypt(context, seckey, vdiff);
+
+    STDSC_LOG_DEBUG("vdiff: sz:%ld, [0]:%ld, plain_mod/2:%ld, last_index:%ld\n",
+                    vdiff.size(), vdiff[0], plain_mod/2, last_index);
+    
     if (vdiff[0] < plain_mod / 2) {
         b = 1;
         new_index = cparam.index;
@@ -76,9 +80,8 @@ DEFUN_DOWNLOAD(CallbackFunctionSessionCreate)
     STDSC_LOG_INFO("Received session create. (current state : %s)",
                    state.current_state_str().c_str());
 
-    // TODO: generate session_id
-    static int32_t debug_id = 456;
-    const int32_t session_id = debug_id++;
+    static int32_t initial_id = 1;
+    const int32_t session_id = initial_id++;
     const size_t size = sizeof(session_id);
 
     STDSC_LOG_TRACE("generate session#%d", session_id);

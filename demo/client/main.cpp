@@ -106,7 +106,7 @@ void exec(Option& option)
         permvecs.push_back(permvec);
         
         client.compute(session_id, data, permvec, info.class_num);
-        if (debug) break;
+        //if (debug++ > 2) break;
     }
     
     client.wait();
@@ -118,7 +118,7 @@ void exec(Option& option)
         auto depermed = (permvec.vdata())[index];
 
         printf("Classification result of %ld: index=%ld, class=%s\n",
-               i, depermed, info.class_names[depermed].c_str());
+               i+1, depermed, info.class_names[depermed].c_str());
     }
 }
 

@@ -50,7 +50,8 @@ struct ResultThread<T>::Impl
     {
         try
         {
-            STDSC_LOG_TRACE("get result for session#%d", args.session_id);
+            STDSC_LOG_INFO("launched result thread for session#%d", args.session_id);
+
             auto result_index = client_.get_result(args.session_id);
             STDSC_LOG_TRACE("result of session#%d: %ld", args.session_id, result_index);
             cbfunc_(result_index, cbargs_);

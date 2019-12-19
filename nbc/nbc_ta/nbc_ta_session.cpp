@@ -30,7 +30,7 @@ Session::Session(void)
 
 void Session::initialize(void)
 {
-    result_index = -1;
+    result_index = 0;
     is_computed  = false;
 }
 
