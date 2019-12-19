@@ -31,7 +31,7 @@ namespace srv1
 /**
  * @brief Enumeration for state of Server#1 on CS.
  */
-enum StateId_t : uint64_t
+enum StateId_t : int32_t
 {
     kStateNil            = 0,
     kStateReady          = 1,
@@ -61,10 +61,11 @@ struct StateReady : public stdsc::State
     static std::shared_ptr<State> create(void);
     StateReady(void);
     virtual void set(stdsc::StateContext &sc, uint64_t event) override;
-    virtual uint64_t id(void) const override
-    {
-        return kStateReady;
-    }
+    STDSC_STATE_DEFID(kStateReady);
+    //virtual uint64_t id(void) const override
+    //{
+    //    return kStateReady;
+    //}
 
 private:
     struct Impl;
@@ -83,10 +84,11 @@ struct StateSessionCreated : public stdsc::State
                         const bool input_received   = false,
                         const bool permvec_received = false);
     virtual void set(stdsc::StateContext &sc, uint64_t event) override;
-    virtual uint64_t id(void) const override
-    {
-        return kStateSessionCreated;
-    }
+    STDSC_STATE_DEFID(kStateSessionCreated);
+    //virtual uint64_t id(void) const override
+    //{
+    //    return kStateSessionCreated;
+    //}
 
 private:
     struct Impl;
@@ -101,10 +103,11 @@ struct StateComputable : public stdsc::State
     static std::shared_ptr<State> create(void);
     StateComputable(void);
     virtual void set(stdsc::StateContext &sc, uint64_t event) override;
-    virtual uint64_t id(void) const override
-    {
-        return kStateComputable;
-    }
+    STDSC_STATE_DEFID(kStateComputable);
+    //virtual uint64_t id(void) const override
+    //{
+    //    return kStateComputable;
+    //}
 
 private:
     struct Impl;
@@ -119,10 +122,11 @@ struct StateComputed : public stdsc::State
     static std::shared_ptr<State> create(void);
     StateComputed(void);
     virtual void set(stdsc::StateContext &sc, uint64_t event) override;
-    virtual uint64_t id(void) const override
-    {
-        return kStateComputed;
-    }
+    STDSC_STATE_DEFID(kStateComputed);
+    //virtual uint64_t id(void) const override
+    //{
+    //    return kStateComputed;
+    //}
 
 private:
     struct Impl;

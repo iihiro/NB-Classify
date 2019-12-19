@@ -38,14 +38,19 @@ using CallbackParam = nbc_ta::CallbackParam;
 DECLARE_DOWNLOAD_CLASS(CallbackFunctionSessionCreate);
 
 /**
- * @brief Provides callback function in receiving begin computing.
+ * @brief Provides callback function in receiving begin computation.
  */
-DECLARE_REQUEST_CLASS(CallbackFunctionBeginComputing);
+DECLARE_DATA_CLASS(CallbackFunctionBeginComputation);
 
 /**
  * @brief Provides callback function in receiving compute data.
  */
 DECLARE_UPDOWNLOAD_CLASS(CallbackFunctionCompute);
+
+/**
+ * @brief Provides callback function in receiving end computation.
+ */
+DECLARE_DATA_CLASS(CallbackFunctionEndComputation);
 
 } /* namespace srv2 */
 } /* namespace nbc_ta */

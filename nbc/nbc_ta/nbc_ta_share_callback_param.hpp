@@ -20,10 +20,10 @@
 
 #include <memory>
 
-namespace helib
-{
-class FHESecKey;
-}
+//namespace helib
+//{
+//class FHESecKey;
+//}
 
 namespace nbc_share
 {
@@ -36,6 +36,8 @@ class SecKey;
 namespace nbc_ta
 {
 
+class SessionContainer;
+    
 /**
  * @brief This class is used to hold the callback parameters for Server#1 on TA.
  */
@@ -43,20 +45,13 @@ struct CallbackParam
 {
     CallbackParam(void);
     ~CallbackParam(void) = default;
-    
-    void set_skm(std::shared_ptr<nbc_share::SecureKeyFileManager>& skm);
-    nbc_share::SecureKeyFileManager& get_skm(void);
 
-    void set_result(const int32_t session_id, const int64_t result_index);
-    int64_t get_result(const int32_t session_id) const;
-
+    std::shared_ptr<nbc_share::SecureKeyFileManager> skm_ptr;
     std::shared_ptr<nbc_share::Context> context_ptr;
-    std::shared_ptr<nbc_share::PubKey> pubkey_ptr;
-    std::shared_ptr<nbc_share::SecKey> seckey_ptr;
-    
-private:
-    struct Impl;
-    std::shared_ptr<Impl> pimpl_;
+    std::shared_ptr<nbc_share::PubKey>  pubkey_ptr;
+    std::shared_ptr<nbc_share::SecKey>  seckey_ptr;
+
+    std::shared_ptr<SessionContainer> sc_ptr;
 };
 
 } /* namespace nbc_ta */

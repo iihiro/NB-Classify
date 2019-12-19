@@ -18,6 +18,7 @@
 #include <unistd.h>
 #include <string>
 #include <iostream>
+#include <cassert>
 #include <stdsc/stdsc_log.hpp>
 #include <stdsc/stdsc_exception.hpp>
 #include <nbc_share/nbc_pubkey.hpp>
@@ -26,8 +27,11 @@
 #include <nbc_client/nbc_client_dataset.hpp>
 #include <share/define.hpp>
 
+#define USE_TEST_PERMVEC
+
 static constexpr const char* INFO_FILENAME   = "../../../datasets/sample_info.csv";
 static constexpr const char* TEST_FILENAME   = "../../../datasets/sample_test.csv";
+static constexpr const char* PVEC_FILENAME   = "../../../testdata/permvec.txt";
 static constexpr const char* PUBKEY_FILENAME = "pubkey.txt";
 
 struct Option
@@ -60,20 +64,21 @@ void init(Option& option, int argc, char* argv[])
 
 struct ResultParam
 {
-    int64_t index;
+    std::vector<int64_t> indexes;
 };
 
 void result_cb(const int64_t result, void* args)
 {
+    std::cout << "called result callback. result_index:" << result << std::endl;
     auto* param = static_cast<ResultParam*>(args);
-    param->index = result;
+    param->indexes.push_back(result);
 }
 
 void exec(Option& option)
 {
     const char* host   = "localhost";
-    ResultParam args   = {0};
     int32_t session_id = -1;
+    ResultParam args;
 
     nbc_client::Client client(host, PORT_TA_SRV1,
                               host, PORT_CS_SRV1);
@@ -84,16 +89,37 @@ void exec(Option& option)
     nbc_client::Dataset dataset(info);
     dataset.read(TEST_FILENAME);
     
-    session_id = client.create_session(result_cb, &args);
-    std::cout << "session_id: " << session_id << std::endl;
-
-    int debug = 1;
+    std::vector<nbc_share::PermVec> permvecs;
+    
+    int debug = 0;
     for (const auto& data : dataset.data()) {
-        client.compute(session_id, data, info.class_num);
+
+        session_id = client.create_session(result_cb, &args);
+        std::cout << "session_id: " << session_id << std::endl;
+        
+        nbc_share::PermVec permvec;
+#if defined(USE_TEST_PERMVEC)        
+        permvec.load_from_csvfile(PVEC_FILENAME);
+#else
+        permvec.gen_permvec(info.class_num);
+#endif
+        permvecs.push_back(permvec);
+        
+        client.compute(session_id, data, permvec, info.class_num);
         if (debug) break;
     }
     
-    std::cout << "result: " << args.index << std::endl;
+    client.wait();
+
+    assert(args.indexes.size() == dataset.data().size());
+    for (size_t i=0; i<args.indexes.size(); ++i) {
+        auto& permvec = permvecs[i];
+        auto& index   = args.indexes[i];
+        auto depermed = (permvec.vdata())[index];
+
+        printf("Classification result of %ld: index=%ld, class=%s\n",
+               i, depermed, info.class_names[depermed].c_str());
+    }
 }
 
 int main(int argc, char* argv[])

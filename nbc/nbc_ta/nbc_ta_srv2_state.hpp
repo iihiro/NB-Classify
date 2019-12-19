@@ -31,7 +31,7 @@ namespace srv2
 /**
  * @brief Enumeration for state of Server#2 on TA.
  */
-enum StateId_t : uint64_t
+enum StateId_t : int32_t
 {
     kStateNil            = 0,
     kStateReady          = 1,
@@ -60,10 +60,7 @@ struct StateReady : public stdsc::State
     static std::shared_ptr<State> create(void);
     StateReady(void);
     virtual void set(stdsc::StateContext &sc, uint64_t event) override;
-    virtual uint64_t id(void) const override
-    {
-        return kStateReady;
-    }
+    STDSC_STATE_DEFID(kStateReady);
 
 private:
     struct Impl;
@@ -78,10 +75,7 @@ struct StateSessionCreated : public stdsc::State
     static std::shared_ptr<stdsc::State> create(void);
     StateSessionCreated(void);
     virtual void set(stdsc::StateContext &sc, uint64_t event) override;
-    virtual uint64_t id(void) const override
-    {
-        return kStateSessionCreated;
-    }
+    STDSC_STATE_DEFID(kStateSessionCreated);
 
 private:
     struct Impl;
@@ -96,10 +90,7 @@ struct StateComputable : public stdsc::State
     static std::shared_ptr<State> create(void);
     StateComputable(void);
     virtual void set(stdsc::StateContext &sc, uint64_t event) override;
-    virtual uint64_t id(void) const override
-    {
-        return kStateComputable;
-    }
+    STDSC_STATE_DEFID(kStateComputable);
 
 private:
     struct Impl;
@@ -114,10 +105,7 @@ struct StateComputing : public stdsc::State
     static std::shared_ptr<State> create(void);
     StateComputing(void);
     virtual void set(stdsc::StateContext &sc, uint64_t event) override;
-    virtual uint64_t id(void) const override
-    {
-        return kStateComputing;
-    }
+    STDSC_STATE_DEFID(kStateComputing);
 
 private:
     struct Impl;

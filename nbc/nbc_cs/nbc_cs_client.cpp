@@ -24,6 +24,7 @@
 #include <stdsc/stdsc_packet.hpp>
 #include <stdsc/stdsc_log.hpp>
 #include <stdsc/stdsc_exception.hpp>
+#include <stdsc/stdsc_state.hpp>
 #include <nbc_share/nbc_packet.hpp>
 #include <nbc_share/nbc_define.hpp>
 #include <nbc_share/nbc_pubkey.hpp>
@@ -80,6 +81,18 @@ struct Client::Impl
         return *context_;
     }
 
+    void begin_computation(const int32_t session_id)
+    {
+        ta_srv2_client_->send_begin_computation(session_id);
+    }
+    
+    int32_t create_session(void)
+    {
+        int32_t session_id = stdsc::State::StateUndefined;
+        ta_srv2_client_->get_session_id(session_id);
+        return session_id;
+    }
+
     helib::Ctxt compute_on_TA(const helib::Ctxt& ct_diff,
                               const nbc_share::ComputeParam& cparam)
     {
@@ -116,6 +129,11 @@ struct Client::Impl
         return encresult.data();
     }
 
+    void end_computation(const int32_t session_id)
+    {
+        ta_srv2_client_->send_end_computation(session_id);
+    }
+
 private:
     std::shared_ptr<TAClient> ta_srv1_client_;
     std::shared_ptr<TAClient> ta_srv2_client_;
@@ -146,10 +164,25 @@ const nbc_share::Context& Client::context(void) const
     return pimpl_->context();
 }
 
+int32_t Client::create_session(void)
+{
+    return pimpl_->create_session();
+}
+
+void Client::begin_computation(const int32_t session_id)
+{
+    pimpl_->begin_computation(session_id);
+}
+        
 helib::Ctxt Client::compute_on_TA(const helib::Ctxt& ct_diff,
                                   const nbc_share::ComputeParam& cparam)
 {
     return pimpl_->compute_on_TA(ct_diff, cparam);
 }
-    
+
+void Client::end_computation(const int32_t session_id)
+{
+    pimpl_->end_computation(session_id);
+}
+
 } /* namespace nbc_cs */

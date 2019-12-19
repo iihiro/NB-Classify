@@ -58,11 +58,12 @@ struct TAClientBase::Impl
         client_.close();
     }
     
-    void get_pubkey(nbc_share::PubKey& pubkey, std::string filename)
+    void get_pubkey(nbc_share::PubKey& pubkey, const std::string filename)
     {
         stdsc::Buffer buffer;
         client_.recv_data_blocking(nbc_share::kControlCodeDownloadPubkey, buffer);
 
+        // TODO: 無駄に一度ファイルに落としているのを直接読み込むように修正
         auto data = reinterpret_cast<const char*>(buffer.data());
         auto size = buffer.size();
         std::ofstream ofs(filename, std::ios::binary);
@@ -73,7 +74,7 @@ struct TAClientBase::Impl
         pubkey.load_from_file(filename);
     }
 
-    void get_context(nbc_share::Context& context, std::string filename)
+    void get_context(nbc_share::Context& context, const std::string filename)
     {
         stdsc::Buffer buffer;
         client_.recv_data_blocking(nbc_share::kControlCodeDownloadContext, buffer);

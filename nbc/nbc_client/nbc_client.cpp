@@ -34,12 +34,11 @@
 #include <nbc_client/nbc_client_ta_client.hpp>
 #include <nbc_client/nbc_client_cs_client.hpp>
 #include <nbc_client/nbc_client_dataset.hpp>
+#include <nbc_client/nbc_client_result_thread.hpp>
 #include <nbc_client/nbc_client.hpp>
 
 #include <helib/FHE.h>
 #include <helib/EncryptedArray.h>
-
-#define USE_TEST_PERMVEC
 
 namespace nbc_client
 {
@@ -48,8 +47,8 @@ struct Client::Impl
 {
     struct ResultCallback
     {
-        std::function<void(const int64_t result, void* args)> func;
-        void* args;
+        std::shared_ptr<ResultThread<>> thread;
+        ResultThreadParam param;
     };
     
     Impl(const char* ta_host, const char* ta_port,
@@ -80,16 +79,25 @@ struct Client::Impl
         cs_client_->disconnect();
     }
 
-    int32_t create_session(std::function<void(const int64_t result, void* args)> result_cb_func,
-                           void* result_cb_args)
+    int32_t create_session(std::function<void(const int64_t result, void* args)> result_cbfunc,
+                           void* result_cbargs)
     {
-        result_cb_.func = result_cb_func;
-        result_cb_.args = result_cb_args;
-        return cs_client_->send_session_create();
+        auto session_id = cs_client_->send_session_create();
+
+        ResultCallback rcb;
+        rcb.thread = std::make_shared<ResultThread<>>(*ta_client_, result_cbfunc, result_cbargs);
+        rcb.param  = {session_id};
+        cbmap_[session_id] = rcb;
+        cbmap_[session_id].thread->start(cbmap_[session_id].param);
+        
+        STDSC_LOG_TRACE("launched result thread for session#%d", session_id);
+
+        return session_id;
     }
     
     void compute(const int32_t session_id,
                  const std::vector<long>& data,
+                 const nbc_share::PermVec& permvec,
                  const size_t class_num)
     {
         auto& context = *context_;
@@ -106,35 +114,30 @@ struct Client::Impl
         encdata.encrypt(inputdata, context);
         encdata.save_to_file("encdata.txt");
 
-        nbc_share::PermVec pvec;
-#if defined(USE_TEST_PERMVEC)        
-        pvec.load_from_csvfile("../../../testdata/permvec.txt");
-#else
-        pvec.gen_permvec(class_num);
-#endif
-        //printf("experiment permvec: sz=%lu, data= ", pvec.vdata().size());
-        //for (const auto& v : pvec.vdata()) {
-        //    printf("%ld ", v);
-        //}
-        //printf("\n");
-            
-//#if defined(USE_TEST_PERMVEC)
-//        auto permvec = Dataset::read_permvec("../../../testdata/permvec.txt");
+//        nbc_share::PermVec pvec;
+//#if defined(USE_TEST_PERMVEC)        
+//        pvec.load_from_csvfile("../../../testdata/permvec.txt");
 //#else
-//        auto permvec = Dataset::gen_permvec(class_num);
+//        pvec.gen_permvec(class_num);
 //#endif
-//        
-//        printf("permvec: sz=%lu, data= ", permvec.size());
-//        for (auto& v : permvec) printf("%ld ", v);
-//        printf("\n");
-
-        //cs_client_->send_encdata(session_id, encdata);
-        //cs_client_->send_permvec(session_id, permvec);
-        cs_client_->send_input(session_id, encdata, pvec);
-        cs_client_->send_compute_request(session_id);
         
-        auto& cbfunc = result_cb_.func;
-        cbfunc(123, result_cb_.args);
+        cs_client_->send_input(session_id, encdata, permvec);
+        cs_client_->send_compute_request(session_id);
+    }
+
+    void wait(const int32_t session_id)
+    {
+        STDSC_LOG_TRACE("waiting result for session#%d",
+                        session_id);
+        if (session_id == Client::ALL_SESSION) {
+            for (auto& pair : cbmap_) {
+                auto& rcb = pair.second;
+                rcb.thread->wait();
+            }
+        } else if (cbmap_.count(session_id)) {
+            auto& rcb  = cbmap_.at(session_id);
+            rcb.thread->wait();
+        }
     }
 
 private:
@@ -144,8 +147,7 @@ private:
     const uint32_t timeout_sec_;
     std::shared_ptr<nbc_share::Context> context_;
     std::shared_ptr<nbc_share::PubKey> pubkey_;
-    ResultCallback result_cb_;
-    
+    std::unordered_map<int32_t, ResultCallback> cbmap_;
 };
 
 Client::Client(const char* ta_host, const char* ta_port,
@@ -158,17 +160,23 @@ Client::Client(const char* ta_host, const char* ta_port,
 {
 }
 
-int32_t Client::create_session(std::function<void(const int64_t result, void* args)> result_cb_func,
-                               void* result_cb_args)
+int32_t Client::create_session(std::function<void(const int64_t result, void* args)> result_cbfunc,
+                               void* result_cbargs)
 {
-    return pimpl_->create_session(result_cb_func, result_cb_args);
+    return pimpl_->create_session(result_cbfunc, result_cbargs);
 }
     
 void Client::compute(const int32_t session_id,
                      const std::vector<long>& data,
+                     const nbc_share::PermVec& permvec,
                      const size_t class_num)
 {
-    pimpl_->compute(session_id, data, class_num);
+    pimpl_->compute(session_id, data, permvec, class_num);
+}
+
+void Client::wait(const int32_t session_id)
+{
+    pimpl_->wait(session_id);
 }
     
 } /* namespace nbc_client */

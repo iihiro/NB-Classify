@@ -42,12 +42,35 @@ struct TAClient::Impl
     ~Impl(void)
     {}
 
+    void get_session_id(int32_t& session_id)
+    {
+        stdsc::Buffer buffer;
+        client_.recv_data_blocking(nbc_share::kControlCodeDownloadSessionID, buffer);
+        session_id = *reinterpret_cast<int32_t*>(buffer.data());
+    }
+
+    void send_begin_computation(const int32_t session_id)
+    {
+        auto sz = sizeof(session_id);
+        stdsc::Buffer buffer(sz);
+        std::memcpy(buffer.data(), static_cast<const void*>(&session_id), sz);
+        client_.send_data_blocking(nbc_share::kControlCodeDataBeginComputation, buffer);
+    }
+    
     void compute(const stdsc::Buffer& sbuffer,
                  stdsc::Buffer& rbuffer)
     {
         client_.send_recv_data_blocking(
             nbc_share::ControlCode_t::kControlCodeUpDownloadComputeData,
             sbuffer, rbuffer);
+    }
+
+    void send_end_computation(const int32_t session_id)
+    {
+        auto sz = sizeof(session_id);
+        stdsc::Buffer buffer(sz);
+        std::memcpy(buffer.data(), static_cast<const void*>(&session_id), sz);
+        client_.send_data_blocking(nbc_share::kControlCodeDataEndComputation, buffer);
     }
     
 private:
@@ -61,11 +84,25 @@ TAClient::TAClient(const char* host, const char* port)
     pimpl_ = std::make_shared<Impl>(client);
 }
 
+void TAClient::get_session_id(int32_t& session_id)
+{
+    pimpl_->get_session_id(session_id);
+}
+
+void TAClient::send_begin_computation(const int32_t session_id)
+{
+    pimpl_->send_begin_computation(session_id);
+}
+
 void TAClient::compute(const stdsc::Buffer& sbuffer,
                        stdsc::Buffer& rbuffer)
 {
     pimpl_->compute(sbuffer, rbuffer);
 }
 
+void TAClient::send_end_computation(const int32_t session_id)
+{
+    pimpl_->send_end_computation(session_id);
+}
 
 } /* namespace nbc_cs */

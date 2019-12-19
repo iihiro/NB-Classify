@@ -136,15 +136,15 @@ const std::vector<std::vector<long>>& Dataset::data(void) const
     return data_;
 }
 
-std::vector<long> Dataset::gen_permvec(const size_t class_num)
-{
-    return genPermVec(static_cast<int>(class_num));
-}
-
-std::vector<long> Dataset::read_permvec(const std::string& filename)
-{
-    return readPermVec(filename);
-}
+//std::vector<long> Dataset::gen_permvec(const size_t class_num)
+//{
+//    return genPermVec(static_cast<int>(class_num));
+//}
+//
+//std::vector<long> Dataset::read_permvec(const std::string& filename)
+//{
+//    return readPermVec(filename);
+//}
 
 
 } /* namespace nbc_client */

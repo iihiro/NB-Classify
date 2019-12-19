@@ -29,7 +29,7 @@ namespace nbc_share
 enum ControlCode_t : uint64_t
 {
     /* Code for Request packet: 0x0201-0x02FF */
-    kControlCodeRequestCompute    = 0x0201,
+    //kControlCodeRequestEndComputation = 0x0201,
 
     /* Code for Data packet: 0x0401-0x04FF */
     kControlCodeDataPubkey        = 0x0401,
@@ -40,16 +40,19 @@ enum ControlCode_t : uint64_t
     kControlCodeDataPermVec       = 0x0406,
     kControlCodeDataCompute       = 0x0407,
     kControlCodeDataComputeAck    = 0x0408,
+    kControlCodeDataBeginComputation = 0x0409,
+    kControlCodeDataEndComputation = 0x0410,
+    kControlCodeDataResultIndex = 0x0411,
 
     /* Code for Download packet: 0x0801-0x08FF */
     kControlCodeDownloadPubkey    = 0x0801,
-    kControlCodeDownloadResult    = 0x0802,
-    kControlCodeDownloadSessionID = 0x0803,
-    kControlCodeDownloadContext   = 0x0804,
+    kControlCodeDownloadSessionID = 0x0802,
+    kControlCodeDownloadContext   = 0x0803,
     
     /* Code for UpDownload packet: 0x1000-0x10FF */
     kControlCodeGroupUpDownload   = 0x1000,
     kControlCodeUpDownloadComputeData = 0x1001,
+    kControlCodeUpDownloadResult = 0x1002,
 };
 
 } /* namespace nbc_share */

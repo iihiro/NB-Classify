@@ -20,7 +20,6 @@
 
 #include <string>
 #include <vector>
-//#include <memory>
 
 namespace nbc_share
 {
@@ -42,9 +41,9 @@ public:
 
     const std::vector<std::vector<long>>& data(void) const;
 
-public:
-    static std::vector<long> gen_permvec(const size_t class_num);
-    static std::vector<long> read_permvec(const std::string& filename);
+//public:
+//    static std::vector<long> gen_permvec(const size_t class_num);
+//    static std::vector<long> read_permvec(const std::string& filename);
 
 private:
     nbc_share::InfoFile info_;

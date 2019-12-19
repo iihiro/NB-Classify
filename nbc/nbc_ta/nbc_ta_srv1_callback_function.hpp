@@ -45,7 +45,7 @@ DECLARE_DOWNLOAD_CLASS(CallbackFunctionContextRequest);
 /**
  * @brief Provides callback function in receiving result request.
  */
-DECLARE_DOWNLOAD_CLASS(CallbackFunctionResultRequest);
+DECLARE_UPDOWNLOAD_CLASS(CallbackFunctionResultRequest);
 
 } /* namespace srv1 */
 } /* namespace nbc_ta */

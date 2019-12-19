@@ -17,6 +17,7 @@
 
 #include <fstream>
 #include <vector>
+#include <cstring>
 #include <stdsc/stdsc_buffer.hpp>
 #include <stdsc/stdsc_socket.hpp>
 #include <stdsc/stdsc_packet.hpp>
@@ -28,6 +29,7 @@
 #include <nbc_ta/nbc_ta_share_callback_param.hpp>
 #include <nbc_ta/nbc_ta_srv1_callback_function.hpp>
 #include <nbc_ta/nbc_ta_srv1_state.hpp>
+#include <nbc_ta/nbc_ta_session.hpp>
 
 namespace nbc_ta
 {
@@ -37,11 +39,11 @@ namespace srv1
 // CallbackFunctionPubkeyRequest
 DEFUN_DOWNLOAD(CallbackFunctionPubkeyRequest)
 {
-    STDSC_LOG_INFO("Received public key request. (current state : %lu)",
-                   state.current_state());
+    STDSC_LOG_INFO("Received public key request. (current state : %s)",
+                   state.current_state_str().c_str());
 
-    auto kind = nbc_share::SecureKeyFileManager::Kind_t::kKindPubKey;
-    auto skm  = param_.get_skm();
+    auto  kind = nbc_share::SecureKeyFileManager::Kind_t::kKindPubKey;
+    auto& skm  = *param_.skm_ptr;
     stdsc::Buffer pubkey(skm.size(kind));
     skm.data(kind, pubkey.data());
     STDSC_LOG_INFO("Sending public key.");
@@ -54,11 +56,11 @@ DEFUN_DOWNLOAD(CallbackFunctionPubkeyRequest)
 // CallbackFunctionContextRequest
 DEFUN_DOWNLOAD(CallbackFunctionContextRequest)
 {
-    STDSC_LOG_INFO("Received context request. (current state : %lu)",
-                   state.current_state());
+    STDSC_LOG_INFO("Received context request. (current state : %s)",
+                   state.current_state_str().c_str());
 
-    auto kind = nbc_share::SecureKeyFileManager::Kind_t::kKindContext;
-    auto skm  = param_.get_skm();
+    auto  kind = nbc_share::SecureKeyFileManager::Kind_t::kKindContext;
+    auto& skm  = *param_.skm_ptr;
     stdsc::Buffer context(skm.size(kind));
     skm.data(kind, context.data());
     STDSC_LOG_INFO("Sending context.");
@@ -69,10 +71,35 @@ DEFUN_DOWNLOAD(CallbackFunctionContextRequest)
 }
 
 // CallbackFunctiondResultRequest
-DEFUN_DOWNLOAD(CallbackFunctionResultRequest)
+DEFUN_UPDOWNLOAD(CallbackFunctionResultRequest)
 {
-    STDSC_LOG_INFO("Received result request. (current state : %lu)",
-                   state.current_state());
+    STDSC_LOG_INFO("Received result request. (current state : %s)",
+                   state.current_state_str().c_str());
+
+    auto session_id = *reinterpret_cast<const int32_t*>(buffer.data());
+    auto& session_container = *param_.sc_ptr;
+
+    if (!session_container.has_context(session_id)) {
+        std::ostringstream oss;
+        oss << "no context for session#" << session_id;
+        STDSC_THROW_CALLBACK(oss.str().c_str());
+    }
+    
+    auto& session = session_container.get(session_id);
+
+    if (!session.computed()) {
+        std::ostringstream oss;
+        oss << "no result for session#" <<  session_id;
+        STDSC_THROW_CALLBACK(oss.str().c_str());
+    }
+        
+    int64_t result_index = session.get_result();
+    size_t sz = sizeof(result_index);
+    stdsc::Buffer resbuffer(sz);
+    std::memcpy(resbuffer.data(), static_cast<const void*>(&result_index), sz);
+    sock.send_packet(
+      stdsc::make_data_packet(nbc_share::kControlCodeDataResultIndex, sz));
+    sock.send_buffer(resbuffer);
 }
 
 } /* namespace srv1 */

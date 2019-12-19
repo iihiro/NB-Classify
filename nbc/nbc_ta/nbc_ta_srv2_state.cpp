@@ -73,7 +73,7 @@ struct StateComputable::Impl
 
     void set(stdsc::StateContext& sc, uint64_t event)
     {
-        STDSC_LOG_TRACE("StateComputable(%lu): event#%lu", event);
+        STDSC_LOG_TRACE("StateComputable: event#%lu", event);
         switch (static_cast<Event_t>(event))
         {
             case kEventComputeRequest:

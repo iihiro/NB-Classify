@@ -31,7 +31,7 @@ namespace srv1
 /**
  * @brief Enumeration for state of Server#1 on TA.
  */
-enum StateId_t : uint64_t
+enum StateId_t : int32_t
 {
     kStateNil   = 0,
     kStateReady = 1,
@@ -57,10 +57,11 @@ struct StateReady : public stdsc::State
     static std::shared_ptr<State> create(void);
     StateReady(void);
     virtual void set(stdsc::StateContext &sc, uint64_t event) override;
-    virtual uint64_t id(void) const override
-    {
-        return kStateReady;
-    }
+    STDSC_STATE_DEFID(kStateReady);
+    //virtual uint64_t id(void) const override
+    //{
+    //    return kStateReady;
+    //}
 
 private:
     struct Impl;

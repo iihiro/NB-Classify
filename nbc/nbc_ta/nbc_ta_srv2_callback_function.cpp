@@ -35,6 +35,7 @@
 #include <nbc_ta/nbc_ta_share_callback_param.hpp>
 #include <nbc_ta/nbc_ta_srv2_callback_function.hpp>
 #include <nbc_ta/nbc_ta_srv2_state.hpp>
+#include <nbc_ta/nbc_ta_session.hpp>
 
 #include <helib/FHE.h>
 #include <helib/EncryptedArray.h>
@@ -72,26 +73,15 @@ long compute(const nbc_share::EncData& enc_diff,
 // CallbackFunctionSessionCreate
 DEFUN_DOWNLOAD(CallbackFunctionSessionCreate)
 {
-    STDSC_LOG_INFO("Received session create. (current state : %lu)",
-                   state.current_state());
+    STDSC_LOG_INFO("Received session create. (current state : %s)",
+                   state.current_state_str().c_str());
 
-    //// ここで今後の計算用にContextとPubkeyを作成して、param_に保持しておく
-    //// 本来はsrv2起動時の鍵が生成されたタイミングでcallback_paramに保持したい
-    //auto& skm = param_.get_skm();
-    //std::shared_ptr<nbc_share::Context> context_ptr(new nbc_share::Context);
-    //context_ptr->load_from_file(skm.filename(nbc_share::SecureKeyFileManager::Kind_t::kKindContext));
-    //std::shared_ptr<nbc_share::PubKey>  pubkey_ptr(new nbc_share::PubKey(context_ptr->get()));
-    //pubkey_ptr->load_from_file(skm.filename(nbc_share::SecureKeyFileManager::Kind_t::kKindPubKey));
-    //std::shared_ptr<nbc_share::SecKey> seckey_ptr(new nbc_share::SecKey(context_ptr->get()));
-    //seckey_ptr->load_from_file(skm.filename(nbc_share::SecureKeyFileManager::Kind_t::kKindSecKey));
-    //
-    //param_.context_ptr = context_ptr;
-    //param_.pubkey_ptr  = pubkey_ptr;
-    //param_.seckey_ptr  = seckey_ptr;
-    
-    // generate session_id
-    const int32_t session_id = 456;
+    // TODO: generate session_id
+    static int32_t debug_id = 456;
+    const int32_t session_id = debug_id++;
     const size_t size = sizeof(session_id);
+
+    STDSC_LOG_TRACE("generate session#%d", session_id);
     
     stdsc::Buffer buffer(size);
     std::memcpy(buffer.data(), &session_id, size);
@@ -102,24 +92,27 @@ DEFUN_DOWNLOAD(CallbackFunctionSessionCreate)
     state.set(kEventSessionCreate);
 }
 
-// CallbackFunctionBeginComputing
-DEFUN_REQUEST(CallbackFunctionBeginComputing)
+// CallbackFunctionBeginComputation
+DEFUN_DATA(CallbackFunctionBeginComputation)
 {
-    STDSC_LOG_INFO("Received begin computing. (current state : %lu)",
-                   state.current_state());
+    STDSC_LOG_INFO("Received begin computation. (current state : %s)",
+                   state.current_state_str().c_str());
     STDSC_THROW_CALLBACK_IF_CHECK(
         (kStateSessionCreated == state.current_state() ||
          kStateComputing == state.current_state()),
-        "Warn: must be session created or computing state to receive begin computing.");
+        "Warn: must be session created or computing state to receive begin computation.");
 
+    auto session_id = *reinterpret_cast<const int32_t*>(buffer.data());
+    param_.sc_ptr->initialize(session_id);
+    
     state.set(kEventBeginRequest);
 }
 
 // CallbackFunctionComputeData
 DEFUN_UPDOWNLOAD(CallbackFunctionCompute)
 {
-    STDSC_LOG_INFO("Received compute request. (current state : %lu)",
-                   state.current_state());
+    STDSC_LOG_INFO("Received compute request. (current state : %s)",
+                   state.current_state_str().c_str());
     STDSC_THROW_CALLBACK_IF_CHECK(
         kStateComputable <= state.current_state(),
         "Warn: must be computable state to receive compute request.");
@@ -143,14 +136,14 @@ DEFUN_UPDOWNLOAD(CallbackFunctionCompute)
     long num_slots = param_.context_ptr->get().zMStar.getNSlots();
     std::vector<long> vec_b(num_slots);
 
-    long plain_mod  = param_.get_skm().plain_mod();
-    long last_index = param_.get_result(cparam.session_id);
+    long plain_mod  = param_.skm_ptr->plain_mod();
+    long last_index = param_.sc_ptr->get(cparam.session_id).get_result();
 
     nbc_share::EncData enc_diff(pubkey);
     enc_diff.push(ct_diff);
     auto new_index = compute(enc_diff, cparam, context, seckey,
                              plain_mod, last_index, vec_b);
-    param_.set_result(cparam.session_id, new_index);
+    param_.sc_ptr->set_result(cparam.session_id, new_index);
 
     nbc_share::EncData dst_encdata(pubkey);
     dst_encdata.encrypt(vec_b, context);
@@ -162,9 +155,29 @@ DEFUN_UPDOWNLOAD(CallbackFunctionCompute)
     dst_encdata.save_to_stream(dlstream);
     stdsc::Buffer* dlbuffer = &dlbuffstream;
     sock.send_packet(
-      stdsc::make_data_packet(nbc_share::kControlCodeDataComputeAck, dst_encdata_size));
+      stdsc::make_data_packet(nbc_share::kControlCodeDataComputeAck,
+                              dst_encdata_size));
     sock.send_buffer(*dlbuffer);
 }
-    
+
+// CallbackFunctionEndComputation
+DEFUN_DATA(CallbackFunctionEndComputation)
+{
+    STDSC_LOG_INFO("Received end computation. (current state : %s)",
+                   state.current_state_str().c_str());
+    STDSC_THROW_CALLBACK_IF_CHECK(
+        (kStateComputable == state.current_state() ||
+         kStateComputing  == state.current_state()),
+        "Warn: must be computable or computing state to receive begin computation.");
+
+    auto session_id = *reinterpret_cast<const int32_t*>(buffer.data());
+    param_.sc_ptr->set_computed(session_id);
+
+    STDSC_LOG_DEBUG("end computation: session_id:%d, index after permutation:%ld",
+                    session_id, param_.sc_ptr->get(session_id).get_result());
+
+    state.set(kEventEndRequest);
+}
+
 } /* namespace srv2 */
 } /* namespace nbc_ta */

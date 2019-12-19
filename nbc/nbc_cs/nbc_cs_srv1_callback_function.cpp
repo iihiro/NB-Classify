@@ -49,10 +49,15 @@ namespace srv1
 // CallbackFunctionSessionCreate
 DEFUN_DOWNLOAD(CallbackFunctionSessionCreate)
 {
-    STDSC_LOG_INFO("Received session create. (current state : %lu)",
-                   state.current_state());
-
+    STDSC_LOG_INFO("Received session create. (current state : %s)",
+                   state.current_state_str().c_str());
+    
+#if 1
+    auto& client = param_.get_client();
+    auto session_id = client.create_session();
+#else
     const int32_t session_id = 1234;
+#endif
     const size_t size = sizeof(session_id);
     
     stdsc::Buffer buffer(size);
@@ -66,8 +71,8 @@ DEFUN_DOWNLOAD(CallbackFunctionSessionCreate)
 // CallbackFunctionEncModel
 DEFUN_DATA(CallbackFunctionEncModel)
 {
-    STDSC_LOG_INFO("Received encrypted model. (current state : %lu)",
-                   state.current_state());
+    STDSC_LOG_INFO("Received encrypted model. (current state : %s)",
+                   state.current_state_str().c_str());
     
     stdsc::BufferStream buffstream(buffer);
     std::iostream stream(&buffstream);
@@ -89,8 +94,8 @@ DEFUN_DATA(CallbackFunctionEncModel)
 #if 1
 DEFUN_DATA(CallbackFunctionEncInput)
 {
-    STDSC_LOG_INFO("Received input data. (current state : %lu)",
-                   state.current_state());
+    STDSC_LOG_INFO("Received input data. (current state : %s)",
+                   state.current_state_str().c_str());
     STDSC_THROW_CALLBACK_IF_CHECK(
         (kStateSessionCreated == state.current_state() ||
          kStateComputable     == state.current_state()),
@@ -158,8 +163,8 @@ DEFUN_DATA(CallbackFunctionEncInput)
 // CallbackFunctionPermVec
 DEFUN_DATA(CallbackFunctionPermVec)
 {
-    STDSC_LOG_INFO("Received perm vector. (current state : %lu)",
-                   state.current_state());
+    STDSC_LOG_INFO("Received perm vector. (current state : %s)",
+                   state.current_state_str().c_str());
     STDSC_THROW_CALLBACK_IF_CHECK(
         (kStateSessionCreated == state.current_state() ||
          kStateComputable     == state.current_state()),
@@ -186,8 +191,8 @@ DEFUN_DATA(CallbackFunctionPermVec)
 // CallbackFunctionComputeRequest
 DEFUN_DATA(CallbackFunctionComputeRequest)
 {
-    STDSC_LOG_INFO("Received compute request. (current state : %lu)",
-                   state.current_state());
+    STDSC_LOG_INFO("Received compute request. (current state : %s)",
+                   state.current_state_str().c_str());
     STDSC_THROW_CALLBACK_IF_CHECK(
         kStateComputable == state.current_state(),
         "Warn: must be Computable state to receive compute request.");
@@ -223,6 +228,8 @@ DEFUN_DATA(CallbackFunctionComputeRequest)
         permed.push_back(res_ctxts[permvec[j]]);
     }
     STDSC_LOG_TRACE("Permuted the probability ciphertexts");
+
+    client.begin_computation(session_id);
 
     helib::Ctxt max = permed[0];
 
@@ -262,6 +269,8 @@ DEFUN_DATA(CallbackFunctionComputeRequest)
         ct_temp.multiplyBy(cur_max);
         max -= ct_temp;
     }
+
+    client.end_computation(session_id);
 }
 
 } /* namespace srv1 */

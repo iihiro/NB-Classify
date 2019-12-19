@@ -22,6 +22,7 @@
 #include <vector>
 #include <functional>
 #include <nbc_share/nbc_define.hpp>
+#include <nbc_share/nbc_permvec.hpp>
 
 namespace nbc_client
 {
@@ -33,7 +34,10 @@ class Dataset;
  */
 class Client
 {
+    static constexpr int32_t ALL_SESSION = -1;
+    
 public:
+    
     Client(const char* ta_host, const char* ta_port,
            const char* cs_host, const char* cs_port,
            const bool dl_pubkey = true,
@@ -41,12 +45,16 @@ public:
            const uint32_t timeout_sec = NBC_TIMEOUT_SEC);
     virtual ~Client(void) = default;
 
-    int32_t create_session(std::function<void(const int64_t result, void* args)> result_cb, void* args);
+    int32_t create_session(std::function<void(const int64_t result, void* args)> resultcb,
+                           void* result_cbargs);
 
     void compute(const int32_t session_id,
                  const std::vector<long>& data,
+                 const nbc_share::PermVec& permvec,
                  const size_t class_num);
-    
+
+    void wait(const int32_t session_id = ALL_SESSION);
+        
 private:
     struct Impl;
     std::shared_ptr<Impl> pimpl_;

@@ -15,34 +15,50 @@
  * limitations under the License.
  */
 
-#ifndef NBC_CLIENT_TA_CLIENT_HPP
-#define NBC_CLIENT_TA_CLIENT_HPP
+#ifndef NBC_CLIENT_RESULT_THREAD_HPP
+#define NBC_CLIENT_RESULT_THREAD_HPP
 
 #include <memory>
+#include <vector>
 #include <string>
-#include <nbc_share/nbc_ta_client_base.hpp>
+#include <stdsc/stdsc_thread.hpp>
 
 namespace nbc_client
 {
     
-/**
- * @brief Provides client for Server#1 on TA.
- */
-class TAClient : public nbc_share::TAClientBase
-{
-    using super = nbc_share::TAClientBase;
-    
-public:
-    TAClient(const char* host, const char* port);
-    virtual ~TAClient(void) = default;
+class ResultThreadParam;
+class TAClient;
 
-    int64_t get_result(const int32_t session_id) const;
+/**
+ * @brief The thread to receive result from TA.
+ */
+template <class T = ResultThreadParam>
+class ResultThread : public stdsc::Thread<T>
+{
+    using super = stdsc::Thread<T>;
+
+public:
+    ResultThread(TAClient& ta_client,
+                 std::function<void(const int64_t result, void* args)>& cbfunc,
+                 void* cbargs);
+    virtual ~ResultThread(void);
+
+    void start(T& param);
+    void wait(void);
 
 private:
+    virtual void exec(T& args,
+                      std::shared_ptr<stdsc::ThreadException> te) const override;
+
     struct Impl;
     std::shared_ptr<Impl> pimpl_;
 };
-    
+
+struct ResultThreadParam
+{
+    int32_t dummy;
+};
+
 } /* namespace nbc_client */
 
-#endif /* NBC_CLIENT_TA_CLIENT_HPP */
+#endif /* NBC_CLIENT_RESULT_THREAD_HPP */

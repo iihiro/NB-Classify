@@ -36,8 +36,14 @@ public:
     TAClient(const char* host, const char* port);
     virtual ~TAClient(void) = default;
 
+    void get_session_id(int32_t& session_id);
+
+    void send_begin_computation(const int32_t session_id);
+    
     void compute(const stdsc::Buffer& sbuffer,
                  stdsc::Buffer& rbuffer);
+
+    void send_end_computation(const int32_t session_id);
     
 private:
     struct Impl;

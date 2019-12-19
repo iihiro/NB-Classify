@@ -55,8 +55,14 @@ public:
     const nbc_share::PubKey&  pubkey(void)  const;
     const nbc_share::Context& context(void) const;
 
+    int32_t create_session(void);
+    
+    void begin_computation(const int32_t session_id);
+    
     helib::Ctxt compute_on_TA(const helib::Ctxt& ct_diff,
                               const nbc_share::ComputeParam& cparam);
+    
+    void end_computation(const int32_t session_id);
     
 private:
     struct Impl;

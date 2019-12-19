@@ -108,11 +108,11 @@ start_srv1_async(nbc_ta::CallbackParam& cb_param)
         
         std::shared_ptr<stdsc::CallbackFunction> cb_result(
             new nbc_ta::srv1::CallbackFunctionResultRequest(cb_param));
-        callback.set(nbc_share::kControlCodeDownloadResult, cb_result);
+        callback.set(nbc_share::kControlCodeUpDownloadResult, cb_result);
     }
 
     std::shared_ptr<nbc_ta::TAServer> server = std::make_shared<nbc_ta::TAServer>(
-        PORT_TA_SRV1, callback, state, cb_param.get_skm());
+        PORT_TA_SRV1, callback, state, *cb_param.skm_ptr);
     server->start();
 
     return server;
@@ -130,16 +130,20 @@ start_srv2_async(nbc_ta::CallbackParam& cb_param)
         callback.set(nbc_share::kControlCodeDownloadSessionID, cb_session);
         
         std::shared_ptr<stdsc::CallbackFunction> cb_begin(
-            new nbc_ta::srv2::CallbackFunctionBeginComputing(cb_param));
-        callback.set(nbc_share::kControlCodeRequestCompute, cb_begin);
+            new nbc_ta::srv2::CallbackFunctionBeginComputation(cb_param));
+        callback.set(nbc_share::kControlCodeDataBeginComputation, cb_begin);
         
         std::shared_ptr<stdsc::CallbackFunction> cb_compute(
             new nbc_ta::srv2::CallbackFunctionCompute(cb_param));
         callback.set(nbc_share::kControlCodeUpDownloadComputeData, cb_compute);
+
+        std::shared_ptr<stdsc::CallbackFunction> cb_end(
+            new nbc_ta::srv2::CallbackFunctionEndComputation(cb_param));
+        callback.set(nbc_share::kControlCodeDataEndComputation, cb_end);
     }
 
     std::shared_ptr<nbc_ta::TAServer> server = std::make_shared<nbc_ta::TAServer>(
-        PORT_TA_SRV2, callback, state, cb_param.get_skm());
+        PORT_TA_SRV2, callback, state, *cb_param.skm_ptr);
     server->start();
 
     return server;
@@ -157,7 +161,7 @@ static void exec(const Option& opt)
     }
 
     nbc_ta::CallbackParam cb_param;
-    cb_param.set_skm(skm_ptr);
+    cb_param.skm_ptr = skm_ptr;
     cb_param.context_ptr = std::make_shared<nbc_share::Context>();
     cb_param.context_ptr->load_from_file(opt.context_filename);
     cb_param.pubkey_ptr = std::make_shared<nbc_share::PubKey>(cb_param.context_ptr->get());
