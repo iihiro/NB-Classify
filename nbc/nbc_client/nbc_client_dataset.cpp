@@ -12,8 +12,8 @@
 namespace nbc_client
 {
 
-static
-std::vector<std::vector<std::string>> readData(const std::string& filename)
+static std::vector<std::vector<std::string>>
+readData(const std::string& filename)
 {
     std::vector<std::vector<std::string>> data;
     std::ifstream infile(filename);
@@ -35,9 +35,9 @@ std::vector<std::vector<std::string>> readData(const std::string& filename)
     return data;
 }
 
-#if !defined(NDEBUG)
-static
-void printData(const std::vector<std::vector<std::string>>& data) {
+#if defined(ENABLE_TEST_MODE)
+static void
+printData(const std::vector<std::vector<std::string>>& data) {
     std::cout << "Printing test data" << std::endl;
     for(size_t i=0; i<data.size(); i++) {
         std::cout << "Data " << i << std::endl;
@@ -47,11 +47,11 @@ void printData(const std::vector<std::vector<std::string>>& data) {
         std::cout << std::endl;
     }
 }
-#endif /*if !defined(NDEBUG)*/
+#endif /* #if defined(ENABLE_TEST_MODE) */
 
-static
-std::vector<long> parseData(const std::vector<std::string>& sample,
-                            const std::vector<std::vector<std::string>>& attr_values)
+static std::vector<long>
+parseData(const std::vector<std::string>& sample,
+          const std::vector<std::vector<std::string>>& attr_values)
 {
     std::vector<long> parsed;
     for (size_t i=0; i<sample.size(); i++) {
@@ -67,19 +67,19 @@ std::vector<long> parseData(const std::vector<std::string>& sample,
     return parsed;
 }
 
-#if !defined(NDEBUG)
-static    
-void printParsedData(const std::vector<long>& parsed)
+#if defined(ENABLE_TEST_MODE)
+static void
+printParsedData(const std::vector<long>& parsed)
 {
     for (size_t i=0; i<parsed.size(); i++) {
         std::cout << parsed[i] << ",";
     }
     std::cout << std::endl;
 }
-#endif /* if !defined(NDEBUG) */
+#endif /* #if defined(ENABLE_TEST_MODE) */
 
-static
-std::vector<long> genPermVec(int n)
+static std::vector<long>
+genPermVec(int n)
 {
     std::vector<long> perm_vec(n);
     std::iota(perm_vec.begin(), perm_vec.end(), 0);
@@ -91,7 +91,8 @@ std::vector<long> genPermVec(int n)
     return perm_vec;
 }
 
-std::vector<long> readPermVec(const std::string& filename)
+static std::vector<long>
+readPermVec(const std::string& filename)
 {
     std::vector<long> perm_vec;
     std::ifstream infile(filename);
@@ -135,17 +136,6 @@ const std::vector<std::vector<long>>& Dataset::data(void) const
 {
     return data_;
 }
-
-//std::vector<long> Dataset::gen_permvec(const size_t class_num)
-//{
-//    return genPermVec(static_cast<int>(class_num));
-//}
-//
-//std::vector<long> Dataset::read_permvec(const std::string& filename)
-//{
-//    return readPermVec(filename);
-//}
-
 
 } /* namespace nbc_client */
 

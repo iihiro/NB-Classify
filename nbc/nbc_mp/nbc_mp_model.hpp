@@ -20,7 +20,6 @@
 
 #include <string>
 #include <vector>
-//#include <memory>
 
 namespace nbc_share
 {
@@ -52,12 +51,10 @@ struct Model
     }
     
 private:
-    //struct Impl;
-    //std::shared_ptr<Impl> pimpl_;
     nbc_share::InfoFile info_;
-    int class_num_; //Number of classes
-    int feature_num_; //Number of features
-    std::vector<int> feature_value_num_; //Number of values per feature
+    int class_num_;
+    int feature_num_;
+    std::vector<int> feature_value_num_;
     std::vector<std::vector<long>> probs_;
 };
 

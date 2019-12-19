@@ -150,12 +150,14 @@ int32_t CSClient::send_session_create(void)
     return pimpl_->send_session_create();
 }
 
-void CSClient::send_encdata(const int32_t session_id, const nbc_share::EncData& encdata)
+void CSClient::send_encdata(const int32_t session_id,
+                            const nbc_share::EncData& encdata)
 {
     pimpl_->send_encdata(session_id, encdata);
 }
 
-void CSClient::send_permvec(const int32_t session_id, const std::vector<long>& permvec)
+void CSClient::send_permvec(const int32_t session_id,
+                            const std::vector<long>& permvec)
 {
     pimpl_->send_permvec(session_id, permvec);
 }

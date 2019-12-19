@@ -23,7 +23,6 @@ namespace nbc_share
 std::ostream& operator<<(std::ostream& os, const ComputeParam& cparam)
 {
     os << cparam.index      << std::endl;
-    os << cparam.flag       << std::endl;
     os << cparam.session_id << std::endl;
     return os;
 }
@@ -31,10 +30,8 @@ std::ostream& operator<<(std::ostream& os, const ComputeParam& cparam)
 std::istream& operator>>(std::istream& is, ComputeParam& cparam)
 {
     is >> cparam.index;
-    is >> cparam.flag;
     is >> cparam.session_id;
     return is;
 }
-
     
 } /* namespace nbc_share */

@@ -37,7 +37,7 @@ enum StateId_t : int32_t
     kStateReady          = 1,
     kStateSessionCreated = 2,
     kStateComputable     = 3,
-    kStateComputed       = 4,
+    kStateComputing       = 4,
 };
 
 /**
@@ -62,10 +62,6 @@ struct StateReady : public stdsc::State
     StateReady(void);
     virtual void set(stdsc::StateContext &sc, uint64_t event) override;
     STDSC_STATE_DEFID(kStateReady);
-    //virtual uint64_t id(void) const override
-    //{
-    //    return kStateReady;
-    //}
 
 private:
     struct Impl;
@@ -85,10 +81,6 @@ struct StateSessionCreated : public stdsc::State
                         const bool permvec_received = false);
     virtual void set(stdsc::StateContext &sc, uint64_t event) override;
     STDSC_STATE_DEFID(kStateSessionCreated);
-    //virtual uint64_t id(void) const override
-    //{
-    //    return kStateSessionCreated;
-    //}
 
 private:
     struct Impl;
@@ -104,29 +96,21 @@ struct StateComputable : public stdsc::State
     StateComputable(void);
     virtual void set(stdsc::StateContext &sc, uint64_t event) override;
     STDSC_STATE_DEFID(kStateComputable);
-    //virtual uint64_t id(void) const override
-    //{
-    //    return kStateComputable;
-    //}
-
+    
 private:
     struct Impl;
     std::shared_ptr<Impl> pimpl_;
 };
 
 /**
- * @brief Provides 'Computed' state.
+ * @brief Provides 'Computing' state.
  */
-struct StateComputed : public stdsc::State
+struct StateComputing : public stdsc::State
 {
     static std::shared_ptr<State> create(void);
-    StateComputed(void);
+    StateComputing(void);
     virtual void set(stdsc::StateContext &sc, uint64_t event) override;
-    STDSC_STATE_DEFID(kStateComputed);
-    //virtual uint64_t id(void) const override
-    //{
-    //    return kStateComputed;
-    //}
+    STDSC_STATE_DEFID(kStateComputing);
 
 private:
     struct Impl;

@@ -38,11 +38,13 @@
 #include <nbc_cs/nbc_cs_client.hpp>
 #include <nbc_cs/nbc_cs_srv1_state.hpp>
 
-// for debug by iiz, to be removed
-#include <nbc_share/nbc_seckey.hpp>
-
 #include <helib/FHE.h>
 #include <helib/EncryptedArray.h>
+
+#if defined(ENABLE_TEST_MODE)
+#include <nbc_share/nbc_seckey.hpp>
+#endif
+
 
 namespace nbc_cs
 {
@@ -55,12 +57,8 @@ DEFUN_DOWNLOAD(CallbackFunctionSessionCreate)
     STDSC_LOG_INFO("Received session create. (current state : %s)",
                    state.current_state_str().c_str());
     
-#if 1
     auto& client = param_.get_client();
     auto session_id = client.create_session();
-#else
-    const int32_t session_id = 1234;
-#endif
     const size_t size = sizeof(session_id);
     
     stdsc::Buffer buffer(size);
@@ -94,7 +92,6 @@ DEFUN_DATA(CallbackFunctionEncModel)
 }
 
 // CallbackFunctionEncInput
-#if 1
 DEFUN_DATA(CallbackFunctionEncInput)
 {
     STDSC_LOG_INFO("Received input data. (current state : %s)",
@@ -136,32 +133,6 @@ DEFUN_DATA(CallbackFunctionEncInput)
     state.set(kEventEncInput);
     state.set(kEventPermVec);
 }
-#else
-DEFUN_DATA(CallbackFunctionEncInput)
-{
-    STDSC_LOG_INFO("Received encrypted input. (current state : %lu)",
-                   state.current_state());
-    STDSC_THROW_CALLBACK_IF_CHECK(
-        (kStateSessionCreated == state.current_state() ||
-         kStateComputable     == state.current_state()),
-        "Warn: must be SessionCreated or Computable state to receive encrypting input.");
-
-    stdsc::BufferStream buffstream(buffer);
-    std::iostream stream(&buffstream);
-
-    auto& client = param_.get_client();
-
-    std::shared_ptr<nbc_share::EncData> encdata_ptr(new nbc_share::EncData(client.pubkey()));
-    encdata_ptr->load_from_stream(stream);
-    param_.encdata_ptr = encdata_ptr;
-
-    std::ofstream ofs(param_.encdata_filename);
-    encdata_ptr->save_to_stream(ofs);
-    ofs.close();
-    
-    state.set(kEventEncInput);
-}
-#endif
 
 // CallbackFunctionPermVec
 DEFUN_DATA(CallbackFunctionPermVec)
@@ -223,7 +194,8 @@ DEFUN_DATA(CallbackFunctionComputeRequest)
         res.multiplyBy(ct_data);
         totalSums(ea, res);
         res_ctxts.push_back(res);
-#if 1 //debug by iiz
+        
+#if defined(ENABLE_TEST_MODE)
         {
             nbc_share::SecKey seckey(context_data);
             seckey.load_from_file("../../../testdata/sk_m11119_p2_L180.bin");
@@ -237,7 +209,7 @@ DEFUN_DATA(CallbackFunctionComputeRequest)
             printf("res_ctxts[%ld]: sz:%ld, [0]:%ld\n",
                    j, m.size(), m[0]);
         }
-#endif
+#endif /* #if defined(ENABLE_TEST_MODE) */
     }
     STDSC_LOG_TRACE("finished calculating probability of each class");
 
@@ -257,7 +229,7 @@ DEFUN_DATA(CallbackFunctionComputeRequest)
         STDSC_LOG_INFO("computation loop (%lu / %lu)",
                        j, class_num);
 
-#if 1 // debug by iiz
+#if defined(ENABLE_TEST_MODE)
         auto coeff = 10;
 #else
         auto coeff = (std::rand() % 100) + 1;
@@ -268,7 +240,7 @@ DEFUN_DATA(CallbackFunctionComputeRequest)
         ct_diff.multByConstant(NTL::to_ZZ(coeff));
         STDSC_LOG_TRACE("computed ct_diff");
 
-#if 1 // debug by iiz
+#if defined(ENABLE_TEST_MODE)
         {
             nbc_share::SecKey seckey(context_data);
             seckey.load_from_file("../../../testdata/sk_m11119_p2_L180.bin");
@@ -284,20 +256,13 @@ DEFUN_DATA(CallbackFunctionComputeRequest)
             printf("j:%ld, max: sz:%ld, [0]:%ld, permed[j]: sz:%ld, [0]:%ld\n",
                    j, m.size(), m[0], p.size(), p[0]);
         }
-#endif
+#endif /* #if defined(ENABLE_TEST_MODE) */
 
-        uint32_t flag = 0;
-        //if (j == 1) {
-        //    flag = COMPUTE_FLAG_BGN;
-        //} else if (j == class_num - 1) {
-        //    flag = COMPUTE_FLAG_END;
-        //}
         nbc_share::ComputeParam cparam;
         cparam.index      = j;
-        cparam.flag       = flag;
         cparam.session_id = session_id;
-        STDSC_LOG_TRACE("created compute param (index:%lu, flag:0x%04x, session:%d)",
-                        j, flag, session_id);
+        STDSC_LOG_TRACE("created compute param (index:%lu, session:%d)",
+                        j, session_id);
         
         auto ct_b = client.compute_on_TA(ct_diff, cparam);
         

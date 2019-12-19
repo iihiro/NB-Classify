@@ -7,11 +7,6 @@
 #include <helib/FHE.h>
 #include <helib/EncryptedArray.h>
 
-//namespace helib
-//{
-//    class FHEcontext;
-//}
-
 namespace nbc_share
 {
 

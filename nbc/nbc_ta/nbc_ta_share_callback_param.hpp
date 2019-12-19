@@ -20,11 +20,6 @@
 
 #include <memory>
 
-//namespace helib
-//{
-//class FHESecKey;
-//}
-
 namespace nbc_share
 {
 class SecureKeyFileManager;

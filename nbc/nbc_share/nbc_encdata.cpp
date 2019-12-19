@@ -60,14 +60,6 @@ void EncData::decrypt(const Context& context,
     ea.decrypt(v, seckey_data, outputdata);
 }
 
-//void EncData::pop(const Context& context,
-//                  const SecKey& seckey,
-//                  std::vector<long>& outputdata)
-//{
-//    peek(context, seckey, outputdata);
-//    vec_.erase(vec_.begin());
-//}
-
 void EncData::save_to_stream(std::ostream& os) const
 {
     if (vec_.size() == 0) {

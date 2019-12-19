@@ -58,10 +58,6 @@ struct StateReady : public stdsc::State
     StateReady(void);
     virtual void set(stdsc::StateContext &sc, uint64_t event) override;
     STDSC_STATE_DEFID(kStateReady);
-    //virtual uint64_t id(void) const override
-    //{
-    //    return kStateReady;
-    //}
 
 private:
     struct Impl;

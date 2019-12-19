@@ -104,7 +104,7 @@ struct StateComputable::Impl
         switch (static_cast<Event_t>(event))
         {
             case kEventComputeRequest:
-                sc.next_state(StateComputed::create());
+                sc.next_state(StateComputing::create());
                 break;
             case kEventSessionCreate:
                 sc.next_state(StateSessionCreated::create(true, false, true));
@@ -115,22 +115,7 @@ struct StateComputable::Impl
     }
 };
 
-// 次ここから
-// Computable状態でComputeRequestを受け取ったら、
-// TAとの処理ループをやって、最後にEndを送って、
-// そしたら、CSはまた次の処理待ちになるわけなので、
-// Computing状態なんかなくて、SessionCreateに戻る？
-// それか、ComputingをComputedにリネームして、
-// Computed状態でSessionCreateを受け取ったら、
-// TAにSessionIDの再発行を要求するとともに、
-// SessionCreated状態に戻す時に、input_receivedだけfalseにする
-// SessionとEncInputは紐付けたいため、再送信してもらわないと駄目な仕様にする
-//
-// Computable状態でSessionCreateを受け取ったら、
-// TAにSessionIDの再発行を要求するとともに、
-// SessionCreated状態に戻す時に、input_receivedだけfalseにする
-// SessionとEncInputは紐付けたいため、再送信してもらわないと駄目な仕様にする
-struct StateComputed::Impl
+struct StateComputing::Impl
 {
     Impl(void)
     {
@@ -138,7 +123,7 @@ struct StateComputed::Impl
 
     void set(stdsc::StateContext& sc, uint64_t event)
     {
-        STDSC_LOG_TRACE("StateComputed(%lu): event#%lu", event);
+        STDSC_LOG_TRACE("StateComputing(%lu): event#%lu", event);
         switch (static_cast<Event_t>(event))
         {
             case kEventSessionCreate:
@@ -206,19 +191,19 @@ void StateComputable::set(stdsc::StateContext& sc, uint64_t event)
     pimpl_->set(sc, event);
 }
 
-// Computed
+// Computing
 
-std::shared_ptr<stdsc::State> StateComputed::create()
+std::shared_ptr<stdsc::State> StateComputing::create()
 {
-    return std::shared_ptr<stdsc::State>(new StateComputed());
+    return std::shared_ptr<stdsc::State>(new StateComputing());
 }
 
-StateComputed::StateComputed(void)
+StateComputing::StateComputing(void)
     : pimpl_(new Impl())
 {
 }
 
-void StateComputed::set(stdsc::StateContext& sc, uint64_t event)
+void StateComputing::set(stdsc::StateContext& sc, uint64_t event)
 {
     pimpl_->set(sc, event);
 }

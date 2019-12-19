@@ -112,13 +112,6 @@ struct Client::Impl
         encdata.encrypt(inputdata, context);
         encdata.save_to_file("encdata.txt");
 
-//        nbc_share::PermVec pvec;
-//#if defined(USE_TEST_PERMVEC)        
-//        pvec.load_from_csvfile("../../../testdata/permvec.txt");
-//#else
-//        pvec.gen_permvec(class_num);
-//#endif
-        
         cs_client_->send_input(session_id, encdata, permvec);
         cs_client_->send_compute_request(session_id);
     }

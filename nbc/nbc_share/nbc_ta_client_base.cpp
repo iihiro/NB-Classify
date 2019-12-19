@@ -63,7 +63,6 @@ struct TAClientBase::Impl
         stdsc::Buffer buffer;
         client_.recv_data_blocking(nbc_share::kControlCodeDownloadPubkey, buffer);
 
-        // TODO: 無駄に一度ファイルに落としているのを直接読み込むように修正
         auto data = reinterpret_cast<const char*>(buffer.data());
         auto size = buffer.size();
         std::ofstream ofs(filename, std::ios::binary);

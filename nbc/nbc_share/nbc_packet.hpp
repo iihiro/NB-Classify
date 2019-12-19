@@ -29,7 +29,6 @@ namespace nbc_share
 enum ControlCode_t : uint64_t
 {
     /* Code for Request packet: 0x0201-0x02FF */
-    //kControlCodeRequestEndComputation = 0x0201,
 
     /* Code for Data packet: 0x0401-0x04FF */
     kControlCodeDataPubkey        = 0x0401,

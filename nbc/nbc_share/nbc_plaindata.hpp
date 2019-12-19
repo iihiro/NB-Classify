@@ -34,7 +34,7 @@ struct PlainData : public nbc_share::BasicData<T>
     
     PlainData() = default;
     virtual ~PlainData(void) = default;
-#if 1
+
     virtual void save_to_stream(std::ostream& os) const override
     {
         if (super::vec_.size() == 0) {
@@ -59,10 +59,6 @@ struct PlainData : public nbc_share::BasicData<T>
             super::vec_.push_back(v);
         }
     }
-#else
-    virtual void save_to_stream(std::ostream& os) const override;
-    virtual void load_from_stream(std::istream& is) override;
-#endif    
 };
 
 } /* namespace nbc_share */

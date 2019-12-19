@@ -30,8 +30,6 @@ namespace nbc_share
 namespace nbc_mp
 {
 
-//class Dataset;
-    
 /**
  * @brief Provides client for Server#1 on CS.
  */

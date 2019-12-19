@@ -26,8 +26,6 @@
 namespace nbc_mp
 {
     
-//class Model;
-    
 /**
  * @brief Provides client.
  */

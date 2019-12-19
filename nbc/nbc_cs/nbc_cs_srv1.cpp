@@ -20,7 +20,6 @@
 #include <stdsc/stdsc_log.hpp>
 #include <stdsc/stdsc_exception.hpp>
 #include <nbc_share/nbc_utility.hpp>
-//#include <nbc_share/nbc_securekey_filemanager.hpp>
 #include <nbc_cs/nbc_cs_srv1_state.hpp>
 #include <nbc_cs/nbc_cs_srv1.hpp>
 

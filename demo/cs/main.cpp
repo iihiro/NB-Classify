@@ -104,11 +104,6 @@ static void exec(const Option& opt)
         = std::make_shared<nbc_cs::srv1::CSServer>(PORT_CS_SRV1, callback1, state1);
     server1->start();
 
-    std::string key;
-    std::cout << "hit any key to exit server: " << std::endl;
-    std::cin >> key;
-
-    server1->stop();
     server1->wait();
 }    
 

@@ -31,7 +31,7 @@
 
 static constexpr const char* INFO_FILENAME   = "../../../datasets/sample_info.csv";
 static constexpr const char* TEST_FILENAME   = "../../../datasets/sample_test.csv";
-static constexpr const char* PVEC_FILENAME   = "../../../testdata/permvec.txt";
+static constexpr const char* PVEC_FILENAME   = "../../../testdata/permvec.txt"; // for test mode
 static constexpr const char* PUBKEY_FILENAME = "pubkey.txt";
 
 struct Option
@@ -91,14 +91,13 @@ void exec(Option& option)
     
     std::vector<nbc_share::PermVec> permvecs;
     
-    int debug = 0;
     for (const auto& data : dataset.data()) {
 
         session_id = client.create_session(result_cb, &args);
         std::cout << "session_id: " << session_id << std::endl;
         
         nbc_share::PermVec permvec;
-#if defined(USE_TEST_PERMVEC)        
+#if defined(ENABLE_TEST_MODE)
         permvec.load_from_csvfile(PVEC_FILENAME);
 #else
         permvec.gen_permvec(info.class_num);
@@ -106,7 +105,6 @@ void exec(Option& option)
         permvecs.push_back(permvec);
         
         client.compute(session_id, data, permvec, info.class_num);
-        //if (debug++ > 2) break;
     }
     
     client.wait();

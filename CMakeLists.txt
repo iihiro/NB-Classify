@@ -11,6 +11,11 @@ set(HELIB_DIR /usr/local/helib_pack)
 include_directories(${PROJECT_SOURCE_DIR}/nbc ${PROJECT_SOURCE_DIR}/stdsc ${HELIB_DIR}/include)
 link_directories(${HELIB_DIR}/lib)
 
+option(TEST_MODE "run on test mode" OFF)
+if(TEST_MODE)
+  add_definitions(-DENABLE_TEST_MODE)
+endif()
+
 set(COMMON_LIBS stdsc nbc_share helib ntl gmp)
 
 add_subdirectory(stdsc)

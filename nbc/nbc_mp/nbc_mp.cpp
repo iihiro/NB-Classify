@@ -89,78 +89,18 @@ struct ModelProvider::Impl
             
             std::vector<long> tmp = probs[i];
 
-#if 0 // debug
-            printf("probs[%lu] ", i);
-            for (auto& p : tmp) {
-                printf("%ld ", p);
-            }
-            printf("\n");
-#endif
-            
             for (size_t j=0; j<num_data - 1; j++) {
-                // ↓たぶんこれバグじゃない？？ インデックス j でしょ？
                 tmp.insert(tmp.end(), probs[i].begin(), probs[i].end());
             }
             tmp.resize(num_slots);
-            //helib::Ctxt ctxt(pubkey);
-            //ea.encrypt(ctxt, pubkey, tmp);
-
-#if 0 // debug
-            printf("probs2[%lu] ", i);
-            for (auto& p : tmp) {
-                printf("%ld ", p);
-            }
-            printf("\n");
-#endif
             
             encdata.encrypt(tmp, context);
         }
 
         encdata.save_to_file("encmodel.txt");
         cs_client_->send_encdata(encdata);
-        
-        //std::vector<long> inputdata(num_slots);
-        //std::copy(data.begin(), data.end(), inputdata.begin());
-        //
-        //STDSC_LOG_DEBUG("data.size=%lu, inputdata.size=%lu", data.size(),inputdata.size());
-        //
-        //nbc_share::EncData encdata(pubkey);
-        //encdata.generate(inputdata, context);
-        //encdata.save_to_file("encdata.txt");
-        //
-        //cs_client_->send_encdata(session_id, encdata);
-        //cs_client_->send_compute_request(session_id);
-        //
-        //auto& cbfunc = result_cb_.func;
-        //cbfunc(123, result_cb_.args);
     }
 
-    //void compute(const int32_t session_id,
-    //             const std::vector<long>& data,
-    //             const size_t class_num)
-    //{
-    //    nbc_share::Context context;
-    //    ta_client_->get_context(context);
-    //    
-    //    nbc_share::PubKey pubkey(context.get());
-    //    ta_client_->get_pubkey(pubkey);
-    //
-    //    auto& context_data = context.get();
-    //    const auto num_slots = context_data.zMStar.getNSlots();
-    //    std::vector<long> inputdata(num_slots);
-    //    std::copy(data.begin(), data.end(), inputdata.begin());
-    //    
-    //    STDSC_LOG_DEBUG("data.size=%lu, inputdata.size=%lu", data.size(),inputdata.size());
-    //
-    //    nbc_share::EncData enc_input(pubkey, context);
-    //    enc_input.generate(inputdata);
-    //
-    //    cs_client_->send_enc_input(session_id, enc_input);
-    //    
-    //    auto& cbfunc = result_cb_.func;
-    //    cbfunc(123, result_cb_.args);
-    //}
-    
 private:
     std::shared_ptr<TAClient> ta_client_;
     std::shared_ptr<CSClient> cs_client_;
@@ -180,12 +120,6 @@ ModelProvider::ModelProvider(const char* ta_host, const char* ta_port,
 {
 }
 
-//int32_t Client::create_session(std::function<void(const int64_t result, void* args)> result_cb_func,
-//                               void* result_cb_args)
-//{
-//    return pimpl_->create_session(result_cb_func, result_cb_args);
-//}
-    
 void ModelProvider::send_encmodel(const std::vector<std::vector<long>>& probs,
                                   const size_t num_features,
                                   const size_t class_num)

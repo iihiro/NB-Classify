@@ -116,5 +116,4 @@ const Session& SessionContainer::get(const int32_t session_id) const
     return pimpl_->get(session_id);
 }
 
-
 } /* namespace nbc_ta */

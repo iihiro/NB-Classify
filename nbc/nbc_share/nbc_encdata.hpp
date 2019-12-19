@@ -47,10 +47,6 @@ struct EncData : public nbc_share::BasicData<helib::Ctxt>
     void decrypt(const nbc_share::Context& context,
                  const nbc_share::SecKey& seckey,
                  std::vector<long>& outputdata) const;
-    
-    //void pop(const nbc_share::Context& context,
-    //         const nbc_share::SecKey& seckey,
-    //         std::vector<long>& outputdata);
 
     virtual void save_to_stream(std::ostream& os) const override;
     virtual void load_from_stream(std::istream& is) override;
