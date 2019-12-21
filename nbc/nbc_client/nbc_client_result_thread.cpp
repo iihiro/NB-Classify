@@ -49,11 +49,9 @@ struct ResultThread<T>::Impl
         try
         {
             STDSC_LOG_INFO("launched result thread for session#%d", args.session_id);
-
-            auto result_index = client_.get_result(args.session_id);
-            STDSC_LOG_TRACE("result of session#%d: %ld", args.session_id, result_index);
-            std::vector<int64_t> indexes;
-            indexes.push_back(result_index);
+            
+            auto indexes = client_.get_results(args.session_id);
+            STDSC_LOG_TRACE("get result of session#%d", args.session_id);
             cbfunc_(indexes, cbargs_);
         }
         catch (const stdsc::AbstractException& e)

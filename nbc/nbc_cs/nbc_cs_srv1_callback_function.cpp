@@ -202,7 +202,6 @@ DEFUN_DATA(CallbackFunctionComputeRequest)
     auto  class_num    = cparam.class_num;
     auto  num_features = cparam.num_features;
     auto  session_id   = cparam.session_id;
-    auto  num_probs    = static_cast<long>(num_features + 1);
 
     STDSC_LOG_INFO("start computing of session#%d. (class_num:%lu, num_features:%lu)",
                    session_id, class_num, num_features);
@@ -218,8 +217,12 @@ DEFUN_DATA(CallbackFunctionComputeRequest)
     NTL::ZZX G = context_data.alMod.getFactorsOverZZ()[0];
     helib::EncryptedArray ea(context_data, G);
 
+    long num_probs = static_cast<long>(num_features + 1);
     long num_slots = context_data.zMStar.getNSlots();
-    STDSC_LOG_DEBUG("number of slots: %ld", num_slots);
+    long num_data  = num_slots / num_probs;
+    long shift_idx = num_data * (num_probs - 1);
+    STDSC_LOG_DEBUG("num_probs:%ld, num_slots:%ld, num_data:%ld, shift_idx:%ld",
+                    num_probs, num_slots, num_data, shift_idx);
 
     std::vector<helib::Ctxt> res_ctxts;
     for (size_t j=0; j<class_num; ++j) {

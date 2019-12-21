@@ -42,7 +42,7 @@ struct TAClient::Impl
     ~Impl(void)
     {}
 
-    int64_t get_result(const int32_t session_id) const
+    std::vector<int64_t> get_results(const int32_t session_id) const
     {
         constexpr uint32_t retry_interval_usec_to_request_result = 4000000;
 
@@ -54,7 +54,13 @@ struct TAClient::Impl
         client_.send_recv_data_blocking(nbc_share::kControlCodeUpDownloadResult,
                                         sbuffer, rbuffer,
                                         retry_interval_usec_to_request_result);
-        return *reinterpret_cast<int64_t*>(rbuffer.data());
+
+        const auto* p  = static_cast<const uint8_t*>(rbuffer.data());
+        const auto num = *reinterpret_cast<const size_t*>(p + 0);
+        std::vector<int64_t> indexes(num);
+        memcpy(indexes.data(), reinterpret_cast<const void*>(&p[sizeof(size_t)]),
+               num * sizeof(int64_t));
+        return indexes;
     }
 
 private:
@@ -68,9 +74,9 @@ TAClient::TAClient(const char* host, const char* port)
     pimpl_ = std::make_shared<Impl>(client);
 }
 
-int64_t TAClient::get_result(const int32_t session_id) const
+std::vector<int64_t> TAClient::get_results(const int32_t session_id) const
 {
-    return pimpl_->get_result(session_id);
+    return pimpl_->get_results(session_id);
 }
 
 } /* namespace nbc_client */

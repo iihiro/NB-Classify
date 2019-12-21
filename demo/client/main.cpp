@@ -69,7 +69,6 @@ struct ResultParam
 
 void result_cb(const std::vector<int64_t>& indexes, void* args)
 {
-    //std::cout << "called result callback. result_index:" << result << std::endl;
     std::cout << "called result callback. " << std::endl;
     auto* param = static_cast<ResultParam*>(args);
     for (const auto& index : indexes) {
@@ -94,10 +93,10 @@ void exec(Option& option)
     
     std::vector<nbc_share::PermVec> permvecs;
 
-    size_t i = 0;
-    for (const auto& data : dataset.data()) {
+    auto unit = client.calc_computation_unit_size(info.num_features);    
 
-        std::cout << "Classifying data " << i++ << std::endl;
+    for (size_t i=0; i<dataset.data().size(); i+=unit) {
+        std::cout << "Classifying data " << i << std::endl;
         
         session_id = client.create_session(result_cb, &args);
         std::cout << "session_id: " << session_id << std::endl;
@@ -109,7 +108,8 @@ void exec(Option& option)
         permvec.gen_permvec(info.class_num);
 #endif
         permvecs.push_back(permvec);
-        
+
+        const auto& data = (dataset.data())[i];
         client.compute(session_id, data, permvec,
                        info.class_num, info.num_features);
     }

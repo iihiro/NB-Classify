@@ -79,6 +79,16 @@ struct Client::Impl
         cs_client_->disconnect();
     }
 
+    size_t calc_computation_unit_size(const size_t num_features) {
+#if defined(USE_MULTI)
+        auto num_probs = num_features + 1;
+        auto num_slots = static_cast<size_t>(context_.zMStar.getNSlots());
+        return num_slots / num_probs;
+#else
+        return 1;
+#endif
+    }
+
     int32_t create_session(nbc_client::cbfunc_t result_cbfunc,
                            void* result_cbargs)
     {
@@ -150,6 +160,11 @@ Client::Client(const char* ta_host, const char* ta_port,
     : pimpl_(new Impl(ta_host, ta_port, cs_host, cs_port,
                       dl_pubkey, retry_interval_usec, timeout_sec))
 {
+}
+
+size_t Client::calc_computation_unit_size(const size_t num_features)
+{
+    return pimpl_->calc_computation_unit_size(num_features);
 }
 
 int32_t Client::create_session(nbc_client::cbfunc_t result_cbfunc,

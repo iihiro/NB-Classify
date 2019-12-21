@@ -45,6 +45,8 @@ public:
            const uint32_t timeout_sec = NBC_TIMEOUT_SEC);
     virtual ~Client(void) = default;
 
+    size_t calc_computation_unit_size(const size_t num_features);
+    
     int32_t create_session(nbc_client::cbfunc_t resultcb,
                            void* result_cbargs);
 
