@@ -38,7 +38,8 @@ public:
 
     void get_session_id(int32_t& session_id);
 
-    void send_begin_computation(const int32_t session_id);
+    void send_begin_computation(const int32_t session_id,
+                                const size_t compute_unit);
     
     void compute(const stdsc::Buffer& sbuffer,
                  stdsc::Buffer& rbuffer);

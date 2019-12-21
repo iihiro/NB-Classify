@@ -15,29 +15,16 @@
  * limitations under the License.
  */
 
-#include <nbc_share/nbc_computeparam.hpp>
+#ifndef NBC_CLIENT_RESULT_CBFUNC_HPP
+#define NBC_CLIENT_RESULT_CBFUNC_HPP
 
-namespace nbc_share
+#include <functional>
+
+namespace nbc_client
 {
 
-std::ostream& operator<<(std::ostream& os, const ComputeParam& cparam)
-{
-    os << cparam.compute_index << std::endl;
-    os << cparam.class_num     << std::endl;
-    os << cparam.num_features  << std::endl;
-    os << cparam.compute_unit  << std::endl;
-    os << cparam.session_id    << std::endl;
-    return os;
-}
-
-std::istream& operator>>(std::istream& is, ComputeParam& cparam)
-{
-    is >> cparam.compute_index;
-    is >> cparam.class_num;
-    is >> cparam.num_features;
-    is >> cparam.compute_unit;
-    is >> cparam.session_id;
-    return is;
-}
+using cbfunc_t = std::function<void(const std::vector<int64_t>&, void*)>;
     
-} /* namespace nbc_share */
+} /* namespace nbc_client */
+
+#endif /* NBC_CLIENT_RESULT_CBFUNC_HPP */

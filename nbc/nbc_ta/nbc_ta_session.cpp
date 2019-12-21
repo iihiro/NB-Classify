@@ -29,15 +29,15 @@ Session::Session(void)
     initialize();
 }
 
-void Session::initialize(void)
+void Session::initialize(const size_t initial_index_size)
 {
-    result_index = 0;
+    result_indexes.resize(initial_index_size, 0);
     is_computed  = false;
 }
 
-int64_t Session::get_result(void) const
+const std::vector<int64_t>& Session::get_results(void) const
 {
-    return result_index;
+    return result_indexes;
 }
     
 bool Session::computed(void) const
@@ -51,18 +51,21 @@ struct SessionContainer::Impl
     Impl(void) = default;
     ~Impl(void) = default;
 
-    void initialize(const int32_t session_id)
+    void initialize(const int32_t session_id,
+                    const size_t initial_index_size)
     {
         auto& s = map_[session_id];
-        s.initialize();
+        s.initialize(initial_index_size);
     }
     
-    void set_result(const int32_t session_id,
-                    const int64_t result_index)
+    void set_results(const int32_t session_id,
+                     const std::vector<int64_t>& result_indexes)
     {
         std::lock_guard<std::mutex> lock(mutex_);
         auto& s = map_[session_id];
-        s.result_index = result_index;
+        STDSC_IF_CHECK(s.result_indexes.size() == result_indexes.size(),
+                       "result index size is invalid");
+        std::copy(result_indexes.begin(), result_indexes.end(), s.result_indexes.begin());
     }
 
     void set_computed(const int32_t session_id,
@@ -93,15 +96,16 @@ SessionContainer::SessionContainer(void)
 {
 }
 
-void SessionContainer::initialize(const int32_t session_id)
+    void SessionContainer::initialize(const int32_t session_id,
+                                      const size_t initial_index_size)
 {
-    pimpl_->initialize(session_id);
+    pimpl_->initialize(session_id, initial_index_size);
 }
 
-void SessionContainer::set_result(const int32_t session_id,
-                                  const int64_t result_index)
+void SessionContainer::set_results(const int32_t session_id,
+                                   const std::vector<int64_t>& result_indexes)
 {
-    pimpl_->set_result(session_id, result_index);
+    pimpl_->set_results(session_id, result_indexes);
 }
 
 void SessionContainer::set_computed(const int32_t session_id,

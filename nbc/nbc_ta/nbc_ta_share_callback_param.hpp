@@ -46,6 +46,8 @@ struct CallbackParam
     std::shared_ptr<nbc_share::PubKey>  pubkey_ptr;
     std::shared_ptr<nbc_share::SecKey>  seckey_ptr;
 
+    size_t compute_unit;
+
     std::shared_ptr<SessionContainer> sc_ptr;
 };
 

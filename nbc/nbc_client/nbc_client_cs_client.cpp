@@ -117,13 +117,15 @@ struct CSClient::Impl
     
     void send_compute_request(const int32_t session_id,
                               const size_t class_num,
-                              const size_t num_features)
+                              const size_t num_features,
+                              const size_t compute_unit)
     {
         STDSC_LOG_INFO("Requesting compute.");
-#if 1
+
         nbc_share::ComputeParam cparam;
         cparam.class_num    = class_num;
         cparam.num_features = num_features;
+        cparam.compute_unit = compute_unit;
         cparam.session_id   = session_id;
         
         nbc_share::PlainData<nbc_share::ComputeParam> plaindata;
@@ -137,12 +139,6 @@ struct CSClient::Impl
 
         stdsc::Buffer* buffer = &bufferstream;
         client_.send_data_blocking(nbc_share::kControlCodeDataCompute, *buffer);
-#else
-        stdsc::Buffer buffer(sizeof(session_id));
-        std::memcpy(buffer.data(), static_cast<const void*>(&session_id),
-                    sizeof(session_id));
-        client_.send_data_blocking(nbc_share::kControlCodeDataCompute, buffer);
-#endif
     }
 
 private:
@@ -193,9 +189,10 @@ void CSClient::send_input(const int32_t session_id,
 
 void CSClient::send_compute_request(const int32_t session_id,
                                     const size_t class_num,
-                                    const size_t num_features)
+                                    const size_t num_features,
+                                    const size_t compute_unit)
 {
-    pimpl_->send_compute_request(session_id, class_num, num_features);
+    pimpl_->send_compute_request(session_id, class_num, num_features, compute_unit);
 }
 
 } /* namespace nbc_client */

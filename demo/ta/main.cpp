@@ -50,6 +50,7 @@ struct Option
     std::string pubkey_filename  = PUBKEY_FILENAME;
     std::string seckey_filename  = SECKEY_FILENAME;
     std::string context_filename = CONTEXT_FILENAME;
+    std::string config_filename; // set empty if file is specified
     bool is_generate_securekey   = false;
 };
 
@@ -57,7 +58,7 @@ void init(Option& param, int argc, char* argv[])
 {
     int opt;
     opterr = 0;
-    while ((opt = getopt(argc, argv, "p:s:gh")) != -1)
+    while ((opt = getopt(argc, argv, "p:s:c:t:gh")) != -1)
     {
         switch (opt)
         {
@@ -69,6 +70,9 @@ void init(Option& param, int argc, char* argv[])
                 break;
             case 'c':
                 param.context_filename = optarg;
+                break;
+            case 't':
+                param.config_filename = optarg;
                 break;
             case 'g':
                 param.is_generate_securekey = true;
@@ -147,10 +151,19 @@ start_srv2_async(nbc_ta::CallbackParam& cb_param)
 
 static void exec(const Option& opt)
 {
-    std::shared_ptr<nbc_share::SecureKeyFileManager> skm_ptr(
-        new nbc_share::SecureKeyFileManager(opt.pubkey_filename,
-                                            opt.seckey_filename,
-                                            opt.context_filename));
+    std::shared_ptr<nbc_share::SecureKeyFileManager> skm_ptr;
+    if (opt.config_filename.empty()) {
+        skm_ptr = std::make_shared<nbc_share::SecureKeyFileManager>(
+            opt.pubkey_filename,
+            opt.seckey_filename,
+            opt.context_filename);
+    } else {
+        skm_ptr = std::make_shared<nbc_share::SecureKeyFileManager>(
+            opt.pubkey_filename,
+            opt.seckey_filename,
+            opt.context_filename,
+            opt.config_filename);
+    }
     
     if (opt.is_generate_securekey) {
         skm_ptr->initialize();

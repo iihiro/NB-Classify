@@ -57,6 +57,11 @@ public:
                          const long fheC = DefFheC,
                          const long fheW = DefFheW,
                          const long fheD = DefFheD);
+
+    SecureKeyFileManager(const std::string& pubkey_filename,
+                         const std::string& seckey_filename,
+                         const std::string& context_filename,
+                         const std::string& config_filename);
     
     ~SecureKeyFileManager(void) = default;
 

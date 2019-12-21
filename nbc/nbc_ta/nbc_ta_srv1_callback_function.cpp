@@ -92,11 +92,20 @@ DEFUN_UPDOWNLOAD(CallbackFunctionResultRequest)
         oss << "no result for session#" <<  session_id;
         STDSC_THROW_CALLBACK(oss.str().c_str());
     }
-        
-    int64_t result_index = session.get_result();
-    size_t sz = sizeof(result_index);
+
+    auto& result_indexes = session.get_results();
+
+    size_t num = result_indexes.size();
+    size_t sz  = sizeof(size_t) + num * sizeof(int64_t);
     stdsc::Buffer resbuffer(sz);
-    std::memcpy(resbuffer.data(), static_cast<const void*>(&result_index), sz);
+
+    auto* p = static_cast<uint8_t*>(resbuffer.data());
+    std::memcpy(reinterpret_cast<void*>(p + 0),
+                reinterpret_cast<const void*>(&num), sizeof(size_t));
+    std::memcpy(reinterpret_cast<void*>(p + sizeof(size_t)),
+                result_indexes.data(),
+                num * sizeof(int64_t));
+
     sock.send_packet(
       stdsc::make_data_packet(nbc_share::kControlCodeDataResultIndex, sz));
     sock.send_buffer(resbuffer);

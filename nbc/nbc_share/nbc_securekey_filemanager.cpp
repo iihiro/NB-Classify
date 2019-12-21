@@ -21,6 +21,7 @@
 #include <stdsc/stdsc_exception.hpp>
 #include <nbc_share/nbc_utility.hpp>
 #include <nbc_share/nbc_securekey_filemanager.hpp>
+#include <nbc_share/nbc_config.hpp>
 
 #include <helib/FHE.h>
 #include <helib/EncryptedArray.h>
@@ -53,6 +54,35 @@ struct SecureKeyFileManager::Impl
         filenames_.emplace(kKindSecKey,  seckey_filename);
         filenames_.emplace(kKindContext, context_filename);
     }
+    
+    Impl(const std::string& pubkey_filename,
+         const std::string& seckey_filename,
+         const std::string& context_filename,
+         const std::string& config_filename)
+    {
+        Config conf;
+        conf.load_from_file(config_filename);
+#define READ(key, val) do {                                 \
+            if (conf.is_exist_key(#key))                    \
+                val = config_get_value<long>(conf, #key);   \
+            STDSC_LOG_INFO("read fhe parameter. (%s: %ld)", \
+                           #key, val);                      \
+        } while(0)
+
+        READ(fheM, m_);
+        READ(fheL, l_);
+        READ(fheP, p_);
+        READ(fheR, r_);
+        READ(fheC, c_);
+        READ(fheW, w_);
+        READ(fheD, d_);
+
+#undef READ
+        filenames_.emplace(kKindPubKey,  pubkey_filename);
+        filenames_.emplace(kKindSecKey,  seckey_filename);
+        filenames_.emplace(kKindContext, context_filename);
+    }
+    
     ~Impl(void) = default;
 
     void initialize(void)
@@ -128,13 +158,13 @@ struct SecureKeyFileManager::Impl
 
 private:
     std::unordered_map<Kind_t, std::string> filenames_;
-    const long m_;
-    const long l_;
-    const long p_;
-    const long r_;
-    const long c_;
-    const long w_;
-    const long d_;
+    long m_;
+    long l_;
+    long p_;
+    long r_;
+    long c_;
+    long w_;
+    long d_;
 };
 
 SecureKeyFileManager::SecureKeyFileManager(const std::string& pubkey_filename,
@@ -157,6 +187,17 @@ SecureKeyFileManager::SecureKeyFileManager(const std::string& pubkey_filename,
                     fheC,
                     fheW,
                     fheD))
+{
+}
+
+SecureKeyFileManager::SecureKeyFileManager(const std::string& pubkey_filename,
+                                           const std::string& seckey_filename,
+                                           const std::string& context_filename,
+                                           const std::string& config_filename)
+  : pimpl_(new Impl(pubkey_filename,
+                    seckey_filename,
+                    context_filename,
+                    config_filename))
 {
 }
 

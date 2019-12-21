@@ -20,9 +20,9 @@
 
 #include <memory>
 #include <vector>
-#include <functional>
 #include <nbc_share/nbc_define.hpp>
 #include <nbc_share/nbc_permvec.hpp>
+#include <nbc_client/nbc_client_result_cbfunc.hpp>
 
 namespace nbc_client
 {
@@ -45,7 +45,9 @@ public:
            const uint32_t timeout_sec = NBC_TIMEOUT_SEC);
     virtual ~Client(void) = default;
 
-    int32_t create_session(std::function<void(const int64_t result, void* args)> resultcb,
+    size_t calc_computation_unit_size(const size_t num_features) const;
+    
+    int32_t create_session(nbc_client::cbfunc_t resultcb,
                            void* result_cbargs);
 
     void compute(const int32_t session_id,

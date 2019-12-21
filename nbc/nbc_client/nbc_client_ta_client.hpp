@@ -19,7 +19,7 @@
 #define NBC_CLIENT_TA_CLIENT_HPP
 
 #include <memory>
-#include <string>
+#include <vector>
 #include <nbc_share/nbc_ta_client_base.hpp>
 
 namespace nbc_client
@@ -36,7 +36,7 @@ public:
     TAClient(const char* host, const char* port);
     virtual ~TAClient(void) = default;
 
-    int64_t get_result(const int32_t session_id) const;
+    std::vector<int64_t> get_results(const int32_t session_id) const;
 
 private:
     struct Impl;

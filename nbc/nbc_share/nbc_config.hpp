@@ -15,29 +15,35 @@
  * limitations under the License.
  */
 
-#include <nbc_share/nbc_computeparam.hpp>
+#ifndef NBC_CONFIG_HPP
+#define NBC_CONFIG_HPP
+
+#include <string>
+#include <memory>
 
 namespace nbc_share
 {
 
-std::ostream& operator<<(std::ostream& os, const ComputeParam& cparam)
+/**
+ * @brief This class is used to hold the configuration data.
+ */
+struct Config
 {
-    os << cparam.compute_index << std::endl;
-    os << cparam.class_num     << std::endl;
-    os << cparam.num_features  << std::endl;
-    os << cparam.compute_unit  << std::endl;
-    os << cparam.session_id    << std::endl;
-    return os;
-}
+    Config(void);
+    ~Config(void) = default;
 
-std::istream& operator>>(std::istream& is, ComputeParam& cparam)
-{
-    is >> cparam.compute_index;
-    is >> cparam.class_num;
-    is >> cparam.num_features;
-    is >> cparam.compute_unit;
-    is >> cparam.session_id;
-    return is;
-}
+    std::string get_value(const std::string& key) const;
+    bool is_exist_key(const std::string& key) const;
+    void load_from_file(const std::string& filename);
     
+private:
+    struct Impl;
+    std::shared_ptr<Impl> pimpl_;
+};
+
+template <class T>
+T config_get_value(const Config& config, const std::string& key);
+
 } /* namespace nbc_share */
+
+#endif /* NBC_CONFIG_HPP */

@@ -36,9 +36,7 @@ struct ResultThread<T>::Impl
 {
     std::shared_ptr<stdsc::ThreadException> te_;
 
-    Impl(TAClient& client,
-         std::function<void(const int64_t result, void* args)> cbfunc,
-         void* cbargs)
+    Impl(TAClient& client, cbfunc_t cbfunc, void* cbargs)
         : client_(client),
           cbfunc_(cbfunc),
           cbargs_(cbargs)
@@ -51,10 +49,10 @@ struct ResultThread<T>::Impl
         try
         {
             STDSC_LOG_INFO("launched result thread for session#%d", args.session_id);
-
-            auto result_index = client_.get_result(args.session_id);
-            STDSC_LOG_TRACE("result of session#%d: %ld", args.session_id, result_index);
-            cbfunc_(result_index, cbargs_);
+            
+            auto indexes = client_.get_results(args.session_id);
+            STDSC_LOG_TRACE("get result of session#%d", args.session_id);
+            cbfunc_(indexes, cbargs_);
         }
         catch (const stdsc::AbstractException& e)
         {
@@ -65,14 +63,12 @@ struct ResultThread<T>::Impl
 
 private:
     TAClient& client_;
-    std::function<void(const int64_t result, void* args)> cbfunc_;
+    cbfunc_t cbfunc_;
     void* cbargs_;
 };
 
 template <class T>
-ResultThread<T>::ResultThread(TAClient& ta_client,
-                              std::function<void(const int64_t result, void* args)> cbfunc,
-                              void* cbargs)
+ResultThread<T>::ResultThread(TAClient& ta_client, cbfunc_t cbfunc, void* cbargs)
     : pimpl_(new Impl(ta_client, cbfunc, cbargs))
 {
 }
