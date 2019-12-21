@@ -46,38 +46,56 @@ namespace nbc_ta
 namespace srv2
 {
 
-long compute(const nbc_share::EncData& enc_diff,
-             const nbc_share::ComputeParam& cparam,
-             const nbc_share::Context& context,
-             const nbc_share::SecKey& seckey,
-             const long plain_mod,
-             const long last_index,
-             std::vector<long>& vec_b)
+std::vector<long> compute(const nbc_share::EncData& enc_diff,
+                          const nbc_share::ComputeParam& cparam,
+                          const nbc_share::Context& context,
+                          const nbc_share::SecKey& seckey,
+                          const long plain_mod,
+                          const std::vector<long>& last_indexes,
+                          const size_t compute_unit,
+                          std::vector<long>& vec_b)
 {
     const size_t num_probs = cparam.num_features + 1;
     
     std::vector<long> vdiff;
-    long b = 0;
-    long new_index = last_index;;
+    std::vector<long> new_indexes(last_indexes);
 
     enc_diff.decrypt(context, seckey, vdiff);
 
-    STDSC_LOG_DEBUG("vdiff: sz:%ld, [0]:%ld, plain_mod/2:%ld, last_index:%ld\n",
-                    vdiff.size(), vdiff[0], plain_mod/2, last_index);
-#if defined(USE_SINGLE_OPT)
-    if (vdiff[num_probs - 1] < plain_mod / 2) {
+    STDSC_LOG_DEBUG("vdiff: sz:%ld, [0]:%ld, plain_mod/2:%ld, compute_unit:%lu, num_probs:%lu\n",
+                    vdiff.size(), vdiff[0], plain_mod/2, compute_unit, num_probs);
+
+#if defined (USE_MULTI)
+    for (size_t k=1; k<=compute_unit; ++k) {
+        long b;
+        STDSC_LOG_DEBUG("k:%lu, vdiff:%ld", k, vdiff[(num_probs * k) - 1]);
+        if (vdiff[(num_probs * k) - 1] < plain_mod / 2) {
+            b = 1;
+            new_indexes[k - 1] = cparam.compute_index;
+        } else {
+            b = 0;
+        }
+        vec_b[(num_probs * k) - 1] = b;
+    }
 #else
-    if (vdiff[0] < plain_mod / 2) {
-#endif
+
+  #if defined(USE_SINGLE_OPT)
+    size_t index = num_probs - 1;
+  #else
+    size_t index = 0;
+  #endif
+    
+    long b = 0;
+    if (vdiff[index] < plain_mod / 2) {
         b = 1;
-        new_index = cparam.compute_index;
+        std::fill(new_indexes.begin(), new_indexes.end(), cparam.compute_index);
     } else {
         b = 0;
     }
-
     std::fill(vec_b.begin(), vec_b.end(), b);
+#endif
     
-    return new_index;
+    return new_indexes;
 }
     
 // CallbackFunctionSessionCreate
@@ -110,8 +128,13 @@ DEFUN_DATA(CallbackFunctionBeginComputation)
          kStateComputing == state.current_state()),
         "Warn: must be session created or computing state to receive begin computation.");
 
-    auto session_id = *reinterpret_cast<const int32_t*>(buffer.data());
-    param_.sc_ptr->initialize(session_id);
+    const auto* p = reinterpret_cast<const uint8_t*>(buffer.data());
+    auto session_id   = *reinterpret_cast<const int32_t*>(p + 0);
+    auto compute_unit = *reinterpret_cast<const size_t*>(p + sizeof(int32_t));
+    STDSC_LOG_DEBUG("session_id:%d, compute_unit:%lu", session_id, compute_unit);
+    param_.sc_ptr->initialize(session_id, compute_unit);
+
+    param_.compute_unit = compute_unit;
     
     state.set(kEventBeginRequest);
 }
@@ -141,28 +164,32 @@ DEFUN_UPDOWNLOAD(CallbackFunctionCompute)
     const auto& ct_diff = ust_encdata.data();
     const auto& cparam  = ust_pladata.data();
 
-    STDSC_LOG_INFO("compute %lu (class_num:%lu, num_features:%lu, session_id:%d)",
+    STDSC_LOG_INFO("compute %lu (class_num:%lu, num_features:%lu, compute_unit:%lu, session_id:%d)",
                    cparam.compute_index,
                    cparam.class_num,
                    cparam.num_features,
+                   cparam.compute_unit,
                    cparam.session_id);
 
     long num_slots = param_.context_ptr->get().zMStar.getNSlots();
     std::vector<long> vec_b(num_slots);
 
-    long plain_mod  = param_.skm_ptr->plain_mod();
-#if 1
-    auto& indexes = param_.sc_ptr->get(cparam.session_id).get_results();
-    long last_index = indexes[0];
-#else    
-    long last_index = param_.sc_ptr->get(cparam.session_id).get_result();
-#endif
+    long   plain_mod    = param_.skm_ptr->plain_mod();
+    auto&  indexes      = param_.sc_ptr->get(cparam.session_id).get_results();
+    size_t compute_unit = param_.compute_unit;
+//#if defined(USE_MULTI)
+    // ここから koko
+//#else
+    //std::vector<long> last_indexes(1, indexes[0]);
+    std::vector<long> last_indexes(indexes);
+//#endif
 
     nbc_share::EncData enc_diff(pubkey);
     enc_diff.push(ct_diff);
-    auto new_index = compute(enc_diff, cparam, context, seckey,
-                             plain_mod, last_index, vec_b);
-    param_.sc_ptr->set_result(cparam.session_id, new_index);
+    auto new_indexes = compute(enc_diff, cparam, context, seckey,
+                               plain_mod, last_indexes, compute_unit, vec_b);
+    //param_.sc_ptr->set_result(cparam.session_id, new_index);
+    param_.sc_ptr->set_results(cparam.session_id, new_indexes);
 
     nbc_share::EncData dst_encdata(pubkey);
     dst_encdata.encrypt(vec_b, context);
@@ -193,8 +220,6 @@ DEFUN_DATA(CallbackFunctionEndComputation)
     param_.sc_ptr->set_computed(session_id);
 
     STDSC_LOG_DEBUG("end computation: session_id:%d", session_id);
-    //STDSC_LOG_DEBUG("end computation: session_id:%d, index after permutation:%ld",
-    //session_id, param_.sc_ptr->get(session_id).get_result());
 
     state.set(kEventEndRequest);
 }

@@ -57,7 +57,8 @@ public:
 
     int32_t create_session(void);
     
-    void begin_computation(const int32_t session_id);
+    void begin_computation(const int32_t session_id,
+                           const size_t compute_unit);
     
     helib::Ctxt compute_on_TA(const helib::Ctxt& ct_diff,
                               const nbc_share::ComputeParam& cparam);

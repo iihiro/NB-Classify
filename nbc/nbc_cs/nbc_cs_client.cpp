@@ -81,9 +81,10 @@ struct Client::Impl
         return *context_;
     }
 
-    void begin_computation(const int32_t session_id)
+    void begin_computation(const int32_t session_id,
+                           const size_t compute_unit)
     {
-        ta_srv2_client_->send_begin_computation(session_id);
+        ta_srv2_client_->send_begin_computation(session_id, compute_unit);
     }
     
     int32_t create_session(void)
@@ -169,9 +170,10 @@ int32_t Client::create_session(void)
     return pimpl_->create_session();
 }
 
-void Client::begin_computation(const int32_t session_id)
+void Client::begin_computation(const int32_t session_id,
+                               const size_t compute_unit)
 {
-    pimpl_->begin_computation(session_id);
+    pimpl_->begin_computation(session_id, compute_unit);
 }
         
 helib::Ctxt Client::compute_on_TA(const helib::Ctxt& ct_diff,

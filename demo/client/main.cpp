@@ -69,7 +69,8 @@ struct ResultParam
 
 void result_cb(const std::vector<int64_t>& indexes, void* args)
 {
-    std::cout << "called result callback. " << std::endl;
+    std::cout << "called result callback. (num of indexes: "
+              << indexes.size() << ")" << std::endl;
     auto* param = static_cast<ResultParam*>(args);
     for (const auto& index : indexes) {
         param->indexes.push_back(index);
@@ -95,28 +96,43 @@ void exec(Option& option)
 
     auto unit = client.calc_computation_unit_size(info.num_features);    
 
-    for (size_t i=0; i<dataset.data().size(); i+=unit) {
-        std::cout << "Classifying data " << i << std::endl;
+    for (size_t i=0; i<dataset.data().size() / unit; ++i) {
+        size_t index = i * unit;
+        std::cout << "Classifying data " << index << std::endl;
         
         session_id = client.create_session(result_cb, &args);
         std::cout << "session_id: " << session_id << std::endl;
         
         nbc_share::PermVec permvec;
+
 #if defined(ENABLE_TEST_MODE)
         permvec.load_from_csvfile(PVEC_FILENAME);
 #else
         permvec.gen_permvec(info.class_num);
 #endif
-        permvecs.push_back(permvec);
-
-        const auto& data = (dataset.data())[i];
+        for (size_t j=0; j<unit; ++j) {
+            permvecs.push_back(permvec);
+        }
+        
+#if defined(USE_MULTI)
+        size_t num_probs = info.num_features + 1;
+        size_t num_slots = unit * num_probs;
+        std::vector<long> data(num_slots, 0);
+        for (size_t j=0; j<unit; ++j) {
+            for (size_t k=0; k<num_probs; ++k) {
+                data[(j * num_probs) + k] = (dataset.data())[index + j][k];
+            }
+        }
+#else        
+        const auto& data = (dataset.data())[index];
+#endif
+        
         client.compute(session_id, data, permvec,
                        info.class_num, info.num_features);
     }
-    
+
     client.wait();
 
-    assert(args.indexes.size() == dataset.data().size());
     for (size_t i=0; i<args.indexes.size(); ++i) {
         auto& permvec = permvecs[i];
         auto& index   = args.indexes[i];

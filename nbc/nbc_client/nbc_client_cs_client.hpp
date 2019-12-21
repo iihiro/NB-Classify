@@ -53,7 +53,8 @@ public:
                     const nbc_share::PermVec& permvec);
     void send_compute_request(const int32_t session_id,
                               const size_t class_num,
-                              const size_t num_features);
+                              const size_t num_features,
+                              const size_t compute_unit);
 
 private:
     struct Impl;

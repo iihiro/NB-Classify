@@ -32,6 +32,7 @@ struct ComputeParam
     size_t  compute_index = -1;
     size_t  class_num     = -1;
     size_t  num_features  = -1;
+    size_t  compute_unit  = -1;
     int32_t session_id    = -1;;
 };
 

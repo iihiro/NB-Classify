@@ -49,11 +49,16 @@ struct TAClient::Impl
         session_id = *reinterpret_cast<int32_t*>(buffer.data());
     }
 
-    void send_begin_computation(const int32_t session_id)
+    void send_begin_computation(const int32_t session_id, const size_t compute_unit)
     {
-        auto sz = sizeof(session_id);
+        auto sz = sizeof(session_id) + sizeof(compute_unit);
         stdsc::Buffer buffer(sz);
-        std::memcpy(buffer.data(), static_cast<const void*>(&session_id), sz);
+        auto* p = reinterpret_cast<uint8_t*>(buffer.data());
+        std::memcpy(reinterpret_cast<void*>(p + 0),
+                    static_cast<const void*>(&session_id), sizeof(session_id));
+        std::memcpy(reinterpret_cast<void*>(p + sizeof(session_id)),
+                    static_cast<const void*>(&compute_unit), sizeof(compute_unit));
+        
         client_.send_data_blocking(nbc_share::kControlCodeDataBeginComputation, buffer);
     }
     
@@ -89,9 +94,10 @@ void TAClient::get_session_id(int32_t& session_id)
     pimpl_->get_session_id(session_id);
 }
 
-void TAClient::send_begin_computation(const int32_t session_id)
+void TAClient::send_begin_computation(const int32_t session_id,
+                                      const size_t compute_unit)
 {
-    pimpl_->send_begin_computation(session_id);
+    pimpl_->send_begin_computation(session_id, compute_unit);
 }
 
 void TAClient::compute(const stdsc::Buffer& sbuffer,

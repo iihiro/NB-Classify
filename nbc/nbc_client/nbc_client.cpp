@@ -79,10 +79,11 @@ struct Client::Impl
         cs_client_->disconnect();
     }
 
-    size_t calc_computation_unit_size(const size_t num_features) {
+    size_t calc_computation_unit_size(const size_t num_features) const
+    {
 #if defined(USE_MULTI)
         auto num_probs = num_features + 1;
-        auto num_slots = static_cast<size_t>(context_.zMStar.getNSlots());
+        auto num_slots = static_cast<size_t>(context_->get().zMStar.getNSlots());
         return num_slots / num_probs;
 #else
         return 1;
@@ -111,6 +112,8 @@ struct Client::Impl
     {
         auto& context = *context_;
         auto& pubkey  = *pubkey_;
+
+        const size_t compute_unit = calc_computation_unit_size(num_features);
         
         auto& context_data = context.get();
         const auto num_slots = context_data.zMStar.getNSlots();
@@ -124,7 +127,7 @@ struct Client::Impl
 
         cs_client_->send_input(session_id, encdata, permvec);
         STDSC_LOG_INFO("send computation request for session#%d", session_id);
-        cs_client_->send_compute_request(session_id, class_num, num_features);
+        cs_client_->send_compute_request(session_id, class_num, num_features, compute_unit);
     }
 
     void wait(const int32_t session_id)
@@ -162,7 +165,7 @@ Client::Client(const char* ta_host, const char* ta_port,
 {
 }
 
-size_t Client::calc_computation_unit_size(const size_t num_features)
+size_t Client::calc_computation_unit_size(const size_t num_features) const
 {
     return pimpl_->calc_computation_unit_size(num_features);
 }

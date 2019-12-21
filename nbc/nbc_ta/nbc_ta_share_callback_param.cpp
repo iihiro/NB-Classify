@@ -23,7 +23,8 @@ namespace nbc_ta
 {
 
 CallbackParam::CallbackParam(void)
-    : sc_ptr(new SessionContainer())
+    : compute_unit(0),
+      sc_ptr(new SessionContainer())
 {
 }
     

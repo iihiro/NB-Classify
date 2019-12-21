@@ -91,9 +91,9 @@ static void exec(const Option& opt)
             new nbc_cs::srv1::CallbackFunctionEncInput(cb_param));
         callback1.set(nbc_share::kControlCodeDataInput, cb_input);
 
-        std::shared_ptr<stdsc::CallbackFunction> cb_permvec(
-            new nbc_cs::srv1::CallbackFunctionPermVec(cb_param));
-        callback1.set(nbc_share::kControlCodeDataPermVec, cb_permvec);
+//        std::shared_ptr<stdsc::CallbackFunction> cb_permvec(
+//            new nbc_cs::srv1::CallbackFunctionPermVec(cb_param));
+//        callback1.set(nbc_share::kControlCodeDataPermVec, cb_permvec);
         
         std::shared_ptr<stdsc::CallbackFunction> cb_compute(
             new nbc_cs::srv1::CallbackFunctionComputeRequest(cb_param));

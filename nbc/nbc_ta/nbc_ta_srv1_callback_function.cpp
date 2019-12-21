@@ -94,7 +94,7 @@ DEFUN_UPDOWNLOAD(CallbackFunctionResultRequest)
     }
 
     auto& result_indexes = session.get_results();
-#if 1
+
     size_t num = result_indexes.size();
     size_t sz  = sizeof(size_t) + num * sizeof(int64_t);
     stdsc::Buffer resbuffer(sz);
@@ -105,13 +105,7 @@ DEFUN_UPDOWNLOAD(CallbackFunctionResultRequest)
     std::memcpy(reinterpret_cast<void*>(p + sizeof(size_t)),
                 result_indexes.data(),
                 num * sizeof(int64_t));
-#else
-    int64_t result_index = result_indexes[0];
 
-    size_t sz = sizeof(result_index);
-    stdsc::Buffer resbuffer(sz);
-    std::memcpy(resbuffer.data(), static_cast<const void*>(&result_index), sz);
-#endif
     sock.send_packet(
       stdsc::make_data_packet(nbc_share::kControlCodeDataResultIndex, sz));
     sock.send_buffer(resbuffer);

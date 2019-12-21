@@ -155,33 +155,33 @@ DEFUN_DATA(CallbackFunctionEncInput)
     state.set(kEventPermVec);
 }
 
-// CallbackFunctionPermVec
-DEFUN_DATA(CallbackFunctionPermVec)
-{
-    STDSC_LOG_INFO("Received perm vector. (current state : %s)",
-                   state.current_state_str().c_str());
-    STDSC_THROW_CALLBACK_IF_CHECK(
-        (kStateSessionCreated == state.current_state() ||
-         kStateComputable     == state.current_state()),
-        "Warn: must be SessionCreated or Computable state to receive encrypting input.");
-
-    auto* p    = static_cast<const uint8_t*>(buffer.data());
-    auto  num  = *reinterpret_cast<const size_t*>(p + 0);
-    auto* data = static_cast<const void*>(p + sizeof(size_t));
-    
-    param_.permvec.resize(num, -1);
-    std::memcpy(param_.permvec.data(), data, sizeof(long) * num);
-
-    {
-        std::ostringstream oss;
-        oss << "permvec: sz=" << param_.permvec.size();
-        oss << ", data=";
-        for (auto& v : param_.permvec) oss << " " << v;
-        STDSC_LOG_DEBUG(oss.str().c_str());
-    }
-
-    state.set(kEventPermVec);
-}
+//// CallbackFunctionPermVec
+//DEFUN_DATA(CallbackFunctionPermVec)
+//{
+//    STDSC_LOG_INFO("Received perm vector. (current state : %s)",
+//                   state.current_state_str().c_str());
+//    STDSC_THROW_CALLBACK_IF_CHECK(
+//        (kStateSessionCreated == state.current_state() ||
+//         kStateComputable     == state.current_state()),
+//        "Warn: must be SessionCreated or Computable state to receive encrypting input.");
+//
+//    auto* p    = static_cast<const uint8_t*>(buffer.data());
+//    auto  num  = *reinterpret_cast<const size_t*>(p + 0);
+//    auto* data = static_cast<const void*>(p + sizeof(size_t));
+//    
+//    param_.permvec.resize(num, -1);
+//    std::memcpy(param_.permvec.data(), data, sizeof(long) * num);
+//
+//    {
+//        std::ostringstream oss;
+//        oss << "permvec: sz=" << param_.permvec.size();
+//        oss << ", data=";
+//        for (auto& v : param_.permvec) oss << " " << v;
+//        STDSC_LOG_DEBUG(oss.str().c_str());
+//    }
+//
+//    state.set(kEventPermVec);
+//}
     
 // CallbackFunctionComputeRequest
 DEFUN_DATA(CallbackFunctionComputeRequest)
@@ -201,6 +201,7 @@ DEFUN_DATA(CallbackFunctionComputeRequest)
     auto& cparam = plaindata.data();
     auto  class_num    = cparam.class_num;
     auto  num_features = cparam.num_features;
+    auto  compute_unit = cparam.compute_unit;
     auto  session_id   = cparam.session_id;
 
     STDSC_LOG_INFO("start computing of session#%d. (class_num:%lu, num_features:%lu)",
@@ -220,9 +221,8 @@ DEFUN_DATA(CallbackFunctionComputeRequest)
     long num_probs = static_cast<long>(num_features + 1);
     long num_slots = context_data.zMStar.getNSlots();
     long num_data  = num_slots / num_probs;
-    long shift_idx = num_data * (num_probs - 1);
-    STDSC_LOG_DEBUG("num_probs:%ld, num_slots:%ld, num_data:%ld, shift_idx:%ld",
-                    num_probs, num_slots, num_data, shift_idx);
+    STDSC_LOG_DEBUG("num_probs:%ld, num_slots:%ld, num_data:%ld",
+                    num_probs, num_slots, num_data);
 
     std::vector<helib::Ctxt> res_ctxts;
     for (size_t j=0; j<class_num; ++j) {
@@ -259,7 +259,7 @@ DEFUN_DATA(CallbackFunctionComputeRequest)
     }
     STDSC_LOG_TRACE("Permuted the probability ciphertexts");
 
-    client.begin_computation(session_id);
+    client.begin_computation(session_id, compute_unit);
 
     helib::Ctxt max = permed[0];
 
@@ -277,15 +277,21 @@ DEFUN_DATA(CallbackFunctionComputeRequest)
         auto ct_diff = permed[j];
         auto tmp = max;
         ct_diff -= tmp;
-#if defined(USE_SINGLE_OPT)
+#if defined(USE_SINGLE_OPT) || defined(USE_MULTI)
         std::vector<long> mask(num_slots, 0);
+  #if defined(USE_MULTI)
+        for (size_t k=1; k<=compute_unit; ++k) {
+            mask[(num_probs * k) - 1] = (std::rand() % 100) + 1;
+        }
+  #else
         mask[num_probs - 1] = coeff;
+  #endif      
         NTL::ZZX mask_poly;
         ea.encode(mask_poly, mask);
         ct_diff.multByConstant(mask_poly);
-#else
+#else /* defined(USE_SINGLE_OPT) || defined(USE_MULTI) */
         ct_diff.multByConstant(NTL::to_ZZ(coeff));
-#endif
+#endif /* defined(USE_SINGLE_OPT) || defined(USE_MULTI) */
         STDSC_LOG_TRACE("computed ct_diff");
 
 #if defined(ENABLE_TEST_MODE)
