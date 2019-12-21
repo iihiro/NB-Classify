@@ -67,11 +67,14 @@ struct ResultParam
     std::vector<int64_t> indexes;
 };
 
-void result_cb(const int64_t result, void* args)
+void result_cb(const std::vector<int64_t>& indexes, void* args)
 {
-    std::cout << "called result callback. result_index:" << result << std::endl;
+    //std::cout << "called result callback. result_index:" << result << std::endl;
+    std::cout << "called result callback. " << std::endl;
     auto* param = static_cast<ResultParam*>(args);
-    param->indexes.push_back(result);
+    for (const auto& index : indexes) {
+        param->indexes.push_back(index);
+    }
 }
 
 void exec(Option& option)

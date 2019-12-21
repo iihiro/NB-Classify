@@ -92,8 +92,13 @@ DEFUN_UPDOWNLOAD(CallbackFunctionResultRequest)
         oss << "no result for session#" <<  session_id;
         STDSC_THROW_CALLBACK(oss.str().c_str());
     }
-        
+
+#if 1
+    auto& result_indexes = session.get_results();
+    int64_t result_index = result_indexes[0];
+#else
     int64_t result_index = session.get_result();
+#endif
     size_t sz = sizeof(result_index);
     stdsc::Buffer resbuffer(sz);
     std::memcpy(resbuffer.data(), static_cast<const void*>(&result_index), sz);

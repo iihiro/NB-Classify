@@ -19,6 +19,7 @@
 #define NBC_TA_SESSION_CONTEXT_HPP
 
 #include <memory>
+#include <vector>
 
 namespace nbc_ta
 {
@@ -34,11 +35,11 @@ struct Session
     virtual ~Session(void) = default;
 
     void initialize(void);
-    int64_t get_result(void) const;
+    const std::vector<int64_t>& get_results(void) const;
     bool computed(void) const;
 
 private:
-    int64_t result_index;
+    std::vector<int64_t> result_indexes;
     bool is_computed;
 };
     
@@ -56,6 +57,9 @@ public:
     
     void set_result(const int32_t session_id,
                     const int64_t result_index);
+
+    void push_results(const int32_t session_id,
+                      const std::vector<int64_t>& result_indexes);
 
     void set_computed(const int32_t session_id,
                       const bool is_computed = true);

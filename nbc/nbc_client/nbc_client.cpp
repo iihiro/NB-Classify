@@ -79,7 +79,7 @@ struct Client::Impl
         cs_client_->disconnect();
     }
 
-    int32_t create_session(std::function<void(const int64_t result, void* args)> result_cbfunc,
+    int32_t create_session(nbc_client::cbfunc_t result_cbfunc,
                            void* result_cbargs)
     {
         auto session_id = cs_client_->send_session_create();
@@ -152,7 +152,7 @@ Client::Client(const char* ta_host, const char* ta_port,
 {
 }
 
-int32_t Client::create_session(std::function<void(const int64_t result, void* args)> result_cbfunc,
+int32_t Client::create_session(nbc_client::cbfunc_t result_cbfunc,
                                void* result_cbargs)
 {
     return pimpl_->create_session(result_cbfunc, result_cbargs);

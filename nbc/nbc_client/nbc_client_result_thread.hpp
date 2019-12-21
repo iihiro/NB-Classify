@@ -23,6 +23,7 @@
 #include <string>
 #include <functional>
 #include <stdsc/stdsc_thread.hpp>
+#include <nbc_client/nbc_client_result_cbfunc.hpp>
 
 namespace nbc_client
 {
@@ -38,10 +39,8 @@ class ResultThread : public stdsc::Thread<T>
 {
     using super = stdsc::Thread<T>;
 
-public:
-    ResultThread(TAClient& ta_client,
-                 std::function<void(const int64_t result, void* args)> cbfunc,
-                 void* cbargs);
+public:    
+    ResultThread(TAClient& ta_client, cbfunc_t cbfunc, void* cbargs);
     virtual ~ResultThread(void);
 
     void start(T& param);

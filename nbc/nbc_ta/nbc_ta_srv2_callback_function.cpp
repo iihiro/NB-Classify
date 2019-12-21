@@ -151,7 +151,12 @@ DEFUN_UPDOWNLOAD(CallbackFunctionCompute)
     std::vector<long> vec_b(num_slots);
 
     long plain_mod  = param_.skm_ptr->plain_mod();
+#if 1
+    auto& indexes = param_.sc_ptr->get(cparam.session_id).get_results();
+    long last_index = indexes[0];
+#else    
     long last_index = param_.sc_ptr->get(cparam.session_id).get_result();
+#endif
 
     nbc_share::EncData enc_diff(pubkey);
     enc_diff.push(ct_diff);
@@ -187,8 +192,9 @@ DEFUN_DATA(CallbackFunctionEndComputation)
     auto session_id = *reinterpret_cast<const int32_t*>(buffer.data());
     param_.sc_ptr->set_computed(session_id);
 
-    STDSC_LOG_DEBUG("end computation: session_id:%d, index after permutation:%ld",
-                    session_id, param_.sc_ptr->get(session_id).get_result());
+    STDSC_LOG_DEBUG("end computation: session_id:%d", session_id);
+    //STDSC_LOG_DEBUG("end computation: session_id:%d, index after permutation:%ld",
+    //session_id, param_.sc_ptr->get(session_id).get_result());
 
     state.set(kEventEndRequest);
 }
