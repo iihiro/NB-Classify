@@ -22,14 +22,18 @@ namespace nbc_share
 
 std::ostream& operator<<(std::ostream& os, const ComputeParam& cparam)
 {
-    os << cparam.index      << std::endl;
-    os << cparam.session_id << std::endl;
+    os << cparam.compute_index << std::endl;
+    os << cparam.class_num     << std::endl;
+    os << cparam.num_features  << std::endl;
+    os << cparam.session_id    << std::endl;
     return os;
 }
 
 std::istream& operator>>(std::istream& is, ComputeParam& cparam)
 {
-    is >> cparam.index;
+    is >> cparam.compute_index;
+    is >> cparam.class_num;
+    is >> cparam.num_features;
     is >> cparam.session_id;
     return is;
 }

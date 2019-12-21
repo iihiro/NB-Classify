@@ -51,6 +51,31 @@ namespace nbc_cs
 namespace srv1
 {
 
+#if defined(USE_SINGLE_OPT) || defined(USE_MULTI)
+static void
+modifiedTotalSums(const helib::EncryptedArray& ea, helib::Ctxt& ctxt, long n)
+{
+    if (n == 1) return;
+
+    helib::Ctxt orig = ctxt;
+    long k = NTL::NumBits(n), e = 1;
+
+    for (long i = k-2; i >= 0; i--) {
+        helib::Ctxt tmp1 = ctxt;
+        ea.rotate(tmp1, e);
+        ctxt += tmp1; // ctxt = ctxt + (ctxt >>> e)
+        e = 2*e;
+
+        if (NTL::bit(n, i)) {
+            helib::Ctxt tmp2 = orig;
+            ea.rotate(tmp2, e);
+            ctxt += tmp2;
+            e += 1;
+        }
+    }
+}
+#endif /*#if defined(USE_SINGLE_OPT) */
+    
 // CallbackFunctionSessionCreate
 DEFUN_DOWNLOAD(CallbackFunctionSessionCreate)
 {
@@ -84,10 +109,6 @@ DEFUN_DATA(CallbackFunctionEncModel)
     encmodel_ptr->load_from_stream(stream);
     param_.encmodel_ptr = encmodel_ptr;
 
-    std::ofstream ofs(param_.encmodel_filename);
-    encmodel_ptr->save_to_stream(ofs);
-    ofs.close();
-    
     state.set(kEventEncModel);
 }
 
@@ -171,15 +192,24 @@ DEFUN_DATA(CallbackFunctionComputeRequest)
         kStateComputable == state.current_state(),
         "Warn: must be Computable state to receive compute request.");
 
-    auto* p          = static_cast<const uint8_t*>(buffer.data());
-    auto  session_id = *reinterpret_cast<const int32_t*>(p + 0);
+    stdsc::BufferStream buffstream(buffer);
+    std::iostream stream(&buffstream);
+    
+    nbc_share::PlainData<nbc_share::ComputeParam> plaindata;
+    plaindata.load_from_stream(stream);
+    
+    auto& cparam = plaindata.data();
+    auto  class_num    = cparam.class_num;
+    auto  num_features = cparam.num_features;
+    auto  session_id   = cparam.session_id;
+    auto  num_probs    = static_cast<long>(num_features + 1);
 
-    STDSC_LOG_INFO("start computing of session#%d", session_id);
+    STDSC_LOG_INFO("start computing of session#%d. (class_num:%lu, num_features:%lu)",
+                   session_id, class_num, num_features);
     
     auto& client  = param_.get_client();
     auto& context = client.context();
-    
-    auto  class_num   = param_.permvec.size();
+
     auto& ct_data     = param_.encdata_ptr->data();
     auto& model_ctxts = param_.encmodel_ptr->vdata();
     auto& permvec     = param_.permvec;
@@ -188,11 +218,18 @@ DEFUN_DATA(CallbackFunctionComputeRequest)
     NTL::ZZX G = context_data.alMod.getFactorsOverZZ()[0];
     helib::EncryptedArray ea(context_data, G);
 
+    long num_slots = context_data.zMStar.getNSlots();
+    STDSC_LOG_DEBUG("number of slots: %ld", num_slots);
+
     std::vector<helib::Ctxt> res_ctxts;
     for (size_t j=0; j<class_num; ++j) {
         auto res = model_ctxts[j];
         res.multiplyBy(ct_data);
+#if defined(USE_SINGLE_OPT)
+        modifiedTotalSums(ea, res, num_probs);
+#else
         totalSums(ea, res);
+#endif
         res_ctxts.push_back(res);
         
 #if defined(ENABLE_TEST_MODE)
@@ -237,7 +274,15 @@ DEFUN_DATA(CallbackFunctionComputeRequest)
         auto ct_diff = permed[j];
         auto tmp = max;
         ct_diff -= tmp;
+#if defined(USE_SINGLE_OPT)
+        std::vector<long> mask(num_slots, 0);
+        mask[num_probs - 1] = coeff;
+        NTL::ZZX mask_poly;
+        ea.encode(mask_poly, mask);
+        ct_diff.multByConstant(mask_poly);
+#else
         ct_diff.multByConstant(NTL::to_ZZ(coeff));
+#endif
         STDSC_LOG_TRACE("computed ct_diff");
 
 #if defined(ENABLE_TEST_MODE)
@@ -258,12 +303,7 @@ DEFUN_DATA(CallbackFunctionComputeRequest)
         }
 #endif /* #if defined(ENABLE_TEST_MODE) */
 
-        nbc_share::ComputeParam cparam;
-        cparam.index      = j;
-        cparam.session_id = session_id;
-        STDSC_LOG_TRACE("created compute param (index:%lu, session:%d)",
-                        j, session_id);
-        
+        cparam.compute_index = j;
         auto ct_b = client.compute_on_TA(ct_diff, cparam);
         
         helib::Ctxt cur_max = max;

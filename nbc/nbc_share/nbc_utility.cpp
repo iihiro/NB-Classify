@@ -16,7 +16,8 @@
  */
 
 #include <sys/stat.h> // stat
-#include <cstdlib>    // std::env
+#include <cstdlib>    // std::env, std::rand
+#include <ctime>      // std::time
 #include <cctype>     // isdigit
 #include <fstream>
 #include <sstream>
@@ -106,6 +107,12 @@ void split(const std::string& str, const std::string& delims,
         vec_str.push_back(str.substr(index, next_index - index));
         index = str.find_first_not_of(delims, next_index + 1);
     }
+}
+
+int32_t gen_uuid(void)
+{
+    std::srand(std::time(nullptr));
+    return std::rand();
 }
 
 } /* namespace utility */

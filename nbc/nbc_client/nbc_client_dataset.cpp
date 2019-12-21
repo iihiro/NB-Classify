@@ -35,20 +35,6 @@ readData(const std::string& filename)
     return data;
 }
 
-#if defined(ENABLE_TEST_MODE)
-static void
-printData(const std::vector<std::vector<std::string>>& data) {
-    std::cout << "Printing test data" << std::endl;
-    for(size_t i=0; i<data.size(); i++) {
-        std::cout << "Data " << i << std::endl;
-        for (size_t j=0; j<data[i].size(); j++) {
-            std::cout << data[i][j] << " ";
-        }
-        std::cout << std::endl;
-    }
-}
-#endif /* #if defined(ENABLE_TEST_MODE) */
-
 static std::vector<long>
 parseData(const std::vector<std::string>& sample,
           const std::vector<std::vector<std::string>>& attr_values)
@@ -67,52 +53,6 @@ parseData(const std::vector<std::string>& sample,
     return parsed;
 }
 
-#if defined(ENABLE_TEST_MODE)
-static void
-printParsedData(const std::vector<long>& parsed)
-{
-    for (size_t i=0; i<parsed.size(); i++) {
-        std::cout << parsed[i] << ",";
-    }
-    std::cout << std::endl;
-}
-#endif /* #if defined(ENABLE_TEST_MODE) */
-
-static std::vector<long>
-genPermVec(int n)
-{
-    std::vector<long> perm_vec(n);
-    std::iota(perm_vec.begin(), perm_vec.end(), 0);
-
-    std::random_device seed_gen;
-    std::mt19937 engine(seed_gen());
-    std::shuffle(perm_vec.begin(), perm_vec.end(), engine);
-    
-    return perm_vec;
-}
-
-static std::vector<long>
-readPermVec(const std::string& filename)
-{
-    std::vector<long> perm_vec;
-    std::ifstream infile(filename);
-    std::string line;
-
-    while (std::getline(infile, line)) {
-        std::stringstream ss(line);
-        int num;
-
-        while (ss >> num){
-            perm_vec.push_back(num);
-            if (ss.peek()== ',') {
-                ss.ignore();
-            }
-        }
-    }
-    return perm_vec;
-}
-
-    
 Dataset::Dataset(const nbc_share::InfoFile& info)
     : info_(info)
 {}

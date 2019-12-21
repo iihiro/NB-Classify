@@ -90,9 +90,12 @@ void exec(Option& option)
     dataset.read(TEST_FILENAME);
     
     std::vector<nbc_share::PermVec> permvecs;
-    
+
+    size_t i = 0;
     for (const auto& data : dataset.data()) {
 
+        std::cout << "Classifying data " << i++ << std::endl;
+        
         session_id = client.create_session(result_cb, &args);
         std::cout << "session_id: " << session_id << std::endl;
         
@@ -104,7 +107,8 @@ void exec(Option& option)
 #endif
         permvecs.push_back(permvec);
         
-        client.compute(session_id, data, permvec, info.class_num);
+        client.compute(session_id, data, permvec,
+                       info.class_num, info.num_features);
     }
     
     client.wait();

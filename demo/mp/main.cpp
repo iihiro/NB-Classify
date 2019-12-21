@@ -41,7 +41,7 @@ void init(Option& option, int argc, char* argv[])
 {
     int opt;
     opterr = 0;
-    while ((opt = getopt(argc, argv, "i:t:h")) != -1)
+    while ((opt = getopt(argc, argv, "i:m:h")) != -1)
     {
         switch (opt)
         {

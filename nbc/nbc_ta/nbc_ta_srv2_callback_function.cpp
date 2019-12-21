@@ -32,6 +32,7 @@
 #include <nbc_share/nbc_context.hpp>
 #include <nbc_share/nbc_pubkey.hpp>
 #include <nbc_share/nbc_seckey.hpp>
+#include <nbc_share/nbc_utility.hpp>
 #include <nbc_ta/nbc_ta_share_callback_param.hpp>
 #include <nbc_ta/nbc_ta_srv2_callback_function.hpp>
 #include <nbc_ta/nbc_ta_srv2_state.hpp>
@@ -53,6 +54,8 @@ long compute(const nbc_share::EncData& enc_diff,
              const long last_index,
              std::vector<long>& vec_b)
 {
+    const size_t num_probs = cparam.num_features + 1;
+    
     std::vector<long> vdiff;
     long b = 0;
     long new_index = last_index;;
@@ -61,10 +64,13 @@ long compute(const nbc_share::EncData& enc_diff,
 
     STDSC_LOG_DEBUG("vdiff: sz:%ld, [0]:%ld, plain_mod/2:%ld, last_index:%ld\n",
                     vdiff.size(), vdiff[0], plain_mod/2, last_index);
-    
+#if defined(USE_SINGLE_OPT)
+    if (vdiff[num_probs - 1] < plain_mod / 2) {
+#else
     if (vdiff[0] < plain_mod / 2) {
+#endif
         b = 1;
-        new_index = cparam.index;
+        new_index = cparam.compute_index;
     } else {
         b = 0;
     }
@@ -80,8 +86,7 @@ DEFUN_DOWNLOAD(CallbackFunctionSessionCreate)
     STDSC_LOG_INFO("Received session create. (current state : %s)",
                    state.current_state_str().c_str());
 
-    static int32_t initial_id = 1;
-    const int32_t session_id = initial_id++;
+    const int32_t session_id = nbc_share::utility::gen_uuid();
     const size_t size = sizeof(session_id);
 
     STDSC_LOG_TRACE("generate session#%d", session_id);
@@ -135,6 +140,12 @@ DEFUN_UPDOWNLOAD(CallbackFunctionCompute)
 
     const auto& ct_diff = ust_encdata.data();
     const auto& cparam  = ust_pladata.data();
+
+    STDSC_LOG_INFO("compute %lu (class_num:%lu, num_features:%lu, session_id:%d)",
+                   cparam.compute_index,
+                   cparam.class_num,
+                   cparam.num_features,
+                   cparam.session_id);
 
     long num_slots = param_.context_ptr->get().zMStar.getNSlots();
     std::vector<long> vec_b(num_slots);

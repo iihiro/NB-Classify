@@ -96,7 +96,8 @@ struct Client::Impl
     void compute(const int32_t session_id,
                  const std::vector<long>& data,
                  const nbc_share::PermVec& permvec,
-                 const size_t class_num)
+                 const size_t class_num,
+                 const size_t num_features)
     {
         auto& context = *context_;
         auto& pubkey  = *pubkey_;
@@ -110,10 +111,10 @@ struct Client::Impl
 
         nbc_share::EncData encdata(pubkey);
         encdata.encrypt(inputdata, context);
-        encdata.save_to_file("encdata.txt");
 
         cs_client_->send_input(session_id, encdata, permvec);
-        cs_client_->send_compute_request(session_id);
+        STDSC_LOG_INFO("send computation request for session#%d", session_id);
+        cs_client_->send_compute_request(session_id, class_num, num_features);
     }
 
     void wait(const int32_t session_id)
@@ -160,9 +161,10 @@ int32_t Client::create_session(std::function<void(const int64_t result, void* ar
 void Client::compute(const int32_t session_id,
                      const std::vector<long>& data,
                      const nbc_share::PermVec& permvec,
-                     const size_t class_num)
+                     const size_t class_num,
+                     const size_t num_features)
 {
-    pimpl_->compute(session_id, data, permvec, class_num);
+    pimpl_->compute(session_id, data, permvec, class_num, num_features);
 }
 
 void Client::wait(const int32_t session_id)

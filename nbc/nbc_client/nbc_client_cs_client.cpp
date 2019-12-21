@@ -29,6 +29,7 @@
 #include <nbc_share/nbc_pubkey.hpp>
 #include <nbc_share/nbc_encdata.hpp>
 #include <nbc_share/nbc_permvec.hpp>
+#include <nbc_share/nbc_computeparam.hpp>
 #include <nbc_client/nbc_client_cs_client.hpp>
 
 namespace nbc_client
@@ -114,13 +115,34 @@ struct CSClient::Impl
     }
     
     
-    void send_compute_request(const int32_t session_id)
+    void send_compute_request(const int32_t session_id,
+                              const size_t class_num,
+                              const size_t num_features)
     {
         STDSC_LOG_INFO("Requesting compute.");
+#if 1
+        nbc_share::ComputeParam cparam;
+        cparam.class_num    = class_num;
+        cparam.num_features = num_features;
+        cparam.session_id   = session_id;
+        
+        nbc_share::PlainData<nbc_share::ComputeParam> plaindata;
+        plaindata.push(cparam);
+        
+        auto sz = plaindata.stream_size();
+        stdsc::BufferStream bufferstream(sz);
+        std::iostream stream(&bufferstream);
+
+        plaindata.save_to_stream(stream);
+
+        stdsc::Buffer* buffer = &bufferstream;
+        client_.send_data_blocking(nbc_share::kControlCodeDataCompute, *buffer);
+#else
         stdsc::Buffer buffer(sizeof(session_id));
         std::memcpy(buffer.data(), static_cast<const void*>(&session_id),
                     sizeof(session_id));
         client_.send_data_blocking(nbc_share::kControlCodeDataCompute, buffer);
+#endif
     }
 
 private:
@@ -169,9 +191,11 @@ void CSClient::send_input(const int32_t session_id,
     pimpl_->send_input(session_id, encdata, permvec);
 }
 
-void CSClient::send_compute_request(const int32_t session_id)
+void CSClient::send_compute_request(const int32_t session_id,
+                                    const size_t class_num,
+                                    const size_t num_features)
 {
-    pimpl_->send_compute_request(session_id);
+    pimpl_->send_compute_request(session_id, class_num, num_features);
 }
 
 } /* namespace nbc_client */

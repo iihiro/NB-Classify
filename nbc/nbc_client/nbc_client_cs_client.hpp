@@ -51,7 +51,9 @@ public:
     void send_input(const int32_t session_id,
                     const nbc_share::EncData& encdata,
                     const nbc_share::PermVec& permvec);
-    void send_compute_request(const int32_t session_id);
+    void send_compute_request(const int32_t session_id,
+                              const size_t class_num,
+                              const size_t num_features);
 
 private:
     struct Impl;

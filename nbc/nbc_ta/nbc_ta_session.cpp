@@ -17,6 +17,7 @@
 
 #include <memory>
 #include <unordered_map>
+#include <mutex>
 #include <stdsc/stdsc_exception.hpp>
 #include <nbc_ta/nbc_ta_session.hpp>
 
@@ -59,6 +60,7 @@ struct SessionContainer::Impl
     void set_result(const int32_t session_id,
                     const int64_t result_index)
     {
+        std::lock_guard<std::mutex> lock(mutex_);
         auto& s = map_[session_id];
         s.result_index = result_index;
     }
@@ -66,6 +68,7 @@ struct SessionContainer::Impl
     void set_computed(const int32_t session_id,
                       const bool is_computed)
     {
+        std::lock_guard<std::mutex> lock(mutex_);
         auto& s = map_[session_id];
         s.is_computed = is_computed;
     }
@@ -81,6 +84,7 @@ struct SessionContainer::Impl
     }
 
 private:
+    std::mutex mutex_;
     std::unordered_map<int32_t, Session> map_;
 };
 

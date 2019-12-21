@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 
-#include <mutex>
 #include <stdsc/stdsc_state.hpp>
 #include <stdsc/stdsc_log.hpp>
 #include <nbc_ta/nbc_ta_srv2_state.hpp>

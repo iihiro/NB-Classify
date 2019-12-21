@@ -51,7 +51,8 @@ public:
     void compute(const int32_t session_id,
                  const std::vector<long>& data,
                  const nbc_share::PermVec& permvec,
-                 const size_t class_num);
+                 const size_t class_num,
+                 const size_t num_features);
 
     void wait(const int32_t session_id = ALL_SESSION);
         

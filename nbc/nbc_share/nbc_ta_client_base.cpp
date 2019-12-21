@@ -63,14 +63,9 @@ struct TAClientBase::Impl
         stdsc::Buffer buffer;
         client_.recv_data_blocking(nbc_share::kControlCodeDownloadPubkey, buffer);
 
-        auto data = reinterpret_cast<const char*>(buffer.data());
-        auto size = buffer.size();
-        std::ofstream ofs(filename, std::ios::binary);
-        ofs.write(data, size);
-        STDSC_LOG_INFO("Saved a public key file. (%s)", filename.c_str());
-        ofs.close();
-
-        pubkey.load_from_file(filename);
+        stdsc::BufferStream buffstream(buffer);
+        std::iostream stream(&buffstream);
+        pubkey.load_from_stream(stream);
     }
 
     void get_context(nbc_share::Context& context, const std::string filename)
@@ -78,15 +73,9 @@ struct TAClientBase::Impl
         stdsc::Buffer buffer;
         client_.recv_data_blocking(nbc_share::kControlCodeDownloadContext, buffer);
 
-        auto data = reinterpret_cast<const char*>(buffer.data());
-        auto size = buffer.size();
-        
-        std::ofstream ofs(filename, std::ios::binary);
-        ofs.write(data, size);
-        ofs.close();
-        STDSC_LOG_INFO("Saved a context file. (%s)", filename.c_str());
-
-        context.load_from_file(filename);
+        stdsc::BufferStream buffstream(buffer);
+        std::iostream stream(&buffstream);
+        context.load_from_stream(stream);
     }
 
     stdsc::Client& client(void)
