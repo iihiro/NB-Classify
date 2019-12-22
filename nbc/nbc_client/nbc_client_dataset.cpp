@@ -19,6 +19,12 @@ readData(const std::string& filename)
     std::ifstream infile(filename);
     std::string line;
 
+    if (!infile.is_open()) {
+        std::ostringstream oss;
+        oss << "Failed to open file. (" << filename << ")";
+        STDSC_THROW_FILE(oss.str());
+    }
+    
     while (std::getline(infile, line)) {
         std::vector<std::string> temp;
         std::stringstream ss(line);
