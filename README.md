@@ -70,12 +70,25 @@ The demo app consists of four processes: TA, CS, MP and Client. These processes 
     * TA receives the result request, then returns result indexes corresponding to the session ID (Fig: (10))
 * Usage
     ```sh
-    Usage: ./ta [-p pubkey_filename] [-s seckey_filename] [-c context_filename] [-g]
+    Usage: ./ta [-p pubkey_filename] [-s seckey_filename] [-c context_filename] [-t config_filename] [-g]
     ```
     * -p pubkey_filename : file path of public key file (REQUIRED)
     * -s seckey_filename : file path of secret key file (REQUIRED)
     * -s context_filename : file path of context key file (REQUIRED)
+    * -t config_filename : file path of configuration file (OPTINAL)
     * -g : generates FHE keys if this option is specified (OPTINAL)
+* Configuration
+    * Specify the following FHE parameters in the configuration file.
+        ```
+        fheM = 11119 (Default: 11119)
+        fheL = 180   (Default: 180)
+        fheP = 2     (Default: 2)
+        fheR = 18    (Default: 18)
+        fheC = 3     (Default: 3)
+        fheW = 64    (Default: 64)
+        fheD = 0     (Default: 0)
+        ```
+
 * State Transition Diagram
     * ![](doc/img/nbc_ta_state.png)
 
