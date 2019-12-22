@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# kind of datasets: "", "22", "51", "92"
+SAMPLE_KIND=""
+
 TOPDIR=`pwd`
 BINDIR=${TOPDIR}/build/demo
 DATDIR=${TOPDIR}/datasets
@@ -12,11 +15,11 @@ while getopts s OPT; do
     esac
 done
 
-INFOFILE=${DATDIR}/sample_info.csv
-TESTFILE=${DATDIR}/sample_test.csv
-MODELFILE=${DATDIR}/sample_model.csv
+INFOFILE=${DATDIR}/sample${SAMPLE_KIND}_info.csv
+TESTFILE=${DATDIR}/sample${SAMPLE_KIND}_test.csv
+MODELFILE=${DATDIR}/sample${SAMPLE_KIND}_model.csv
 CONFFILE=${TOPDIR}/demo/ta/config.txt
-EXPCFILE=${TESTDIR}/sample_expect_result.txt
+EXPCFILE=${TESTDIR}/sample${SAMPLE_KIND}_expect_result.txt
 
 xterm -T "TA"       -e "/bin/bash -c 'cd ${BINDIR}/ta     && ./ta ${KEYOPT} -t ${CONFFILE};          exec /bin/bash -i'"&
 xterm -T "CS"       -e "/bin/bash -c 'cd ${BINDIR}/cs     && ./cs;                                   exec /bin/bash -i'"&
