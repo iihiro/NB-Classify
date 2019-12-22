@@ -75,6 +75,16 @@ modifiedTotalSums(const helib::EncryptedArray& ea, helib::Ctxt& ctxt, long n)
     }
 }
 #endif /*#if defined(USE_SINGLE_OPT) */
+
+long calc_coeff(void)
+{
+#if defined(ENABLE_TEST_MODE)
+    long coeff = 10;
+#else
+    long coeff = (std::rand() % 100) + 1;
+#endif
+    return coeff;
+}
     
 // CallbackFunctionSessionCreate
 DEFUN_DOWNLOAD(CallbackFunctionSessionCreate)
@@ -155,34 +165,6 @@ DEFUN_DATA(CallbackFunctionEncInput)
     state.set(kEventPermVec);
 }
 
-//// CallbackFunctionPermVec
-//DEFUN_DATA(CallbackFunctionPermVec)
-//{
-//    STDSC_LOG_INFO("Received perm vector. (current state : %s)",
-//                   state.current_state_str().c_str());
-//    STDSC_THROW_CALLBACK_IF_CHECK(
-//        (kStateSessionCreated == state.current_state() ||
-//         kStateComputable     == state.current_state()),
-//        "Warn: must be SessionCreated or Computable state to receive encrypting input.");
-//
-//    auto* p    = static_cast<const uint8_t*>(buffer.data());
-//    auto  num  = *reinterpret_cast<const size_t*>(p + 0);
-//    auto* data = static_cast<const void*>(p + sizeof(size_t));
-//    
-//    param_.permvec.resize(num, -1);
-//    std::memcpy(param_.permvec.data(), data, sizeof(long) * num);
-//
-//    {
-//        std::ostringstream oss;
-//        oss << "permvec: sz=" << param_.permvec.size();
-//        oss << ", data=";
-//        for (auto& v : param_.permvec) oss << " " << v;
-//        STDSC_LOG_DEBUG(oss.str().c_str());
-//    }
-//
-//    state.set(kEventPermVec);
-//}
-    
 // CallbackFunctionComputeRequest
 DEFUN_DATA(CallbackFunctionComputeRequest)
 {
@@ -228,7 +210,7 @@ DEFUN_DATA(CallbackFunctionComputeRequest)
     for (size_t j=0; j<class_num; ++j) {
         auto res = model_ctxts[j];
         res.multiplyBy(ct_data);
-#if defined(USE_SINGLE_OPT)
+#if defined(USE_SINGLE_OPT) || defined(USE_MULTI)
         modifiedTotalSums(ea, res, num_probs);
 #else
         totalSums(ea, res);
@@ -269,29 +251,24 @@ DEFUN_DATA(CallbackFunctionComputeRequest)
         STDSC_LOG_INFO("computation loop (%lu / %lu)",
                        j, class_num);
 
-#if defined(ENABLE_TEST_MODE)
-        auto coeff = 10;
-#else
-        auto coeff = (std::rand() % 100) + 1;
-#endif
         auto ct_diff = permed[j];
         auto tmp = max;
         ct_diff -= tmp;
 #if defined(USE_SINGLE_OPT) || defined(USE_MULTI)
         std::vector<long> mask(num_slots, 0);
-  #if defined(USE_MULTI)
+    #if defined(USE_MULTI)
         for (size_t k=1; k<=compute_unit; ++k) {
-            mask[(num_probs * k) - 1] = (std::rand() % 100) + 1;
+            mask[(num_probs * k) - 1] = calc_coeff();
         }
-  #else
-        mask[num_probs - 1] = coeff;
-  #endif      
+    #else
+        mask[num_probs - 1] = calc_coeff();
+    #endif      
         NTL::ZZX mask_poly;
         ea.encode(mask_poly, mask);
         ct_diff.multByConstant(mask_poly);
-#else /* defined(USE_SINGLE_OPT) || defined(USE_MULTI) */
-        ct_diff.multByConstant(NTL::to_ZZ(coeff));
-#endif /* defined(USE_SINGLE_OPT) || defined(USE_MULTI) */
+#else
+        ct_diff.multByConstant(NTL::to_ZZ(calc_coeff()));
+#endif
         STDSC_LOG_TRACE("computed ct_diff");
 
 #if defined(ENABLE_TEST_MODE)
