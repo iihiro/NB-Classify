@@ -21,27 +21,8 @@ The library also provides a program for training your classification model and w
 3. Once the library is built, return to the root of library
 
 # How to run
-0. Make a directory `datasets` and put all the necessary files in the directory. Refer to "Format of data sets and other files" written below.
-1. Setup FHE by generating the keys by running the following commands 
-    ```terminal
-    $ mkdir keys
-    $ build/setup
-    ```
-2. Encrypt the trained classification model by running the following commands
-    ```terminal
-    $ mkdir model
-    $ build/encrypt_model
-    ```
-    Input the name of the data set that you want to encrypt
-    
-3. To perform classification, first run `mkdir results` then run the following commands depending on your needs
-    1. Classification of single data per query without any optimization:
-        `build/classifySingle`
-    2. Classification of single data per query with optimization for each data set:
-        `build/classifySingleOpt`
-    3. Classification of multiple data per query:
-        `build/classifyMulti`
-    After running the command, input the name of the data set and the number of classes you want to test.
+
+TODO
 
 
 # Format of data sets and other files
