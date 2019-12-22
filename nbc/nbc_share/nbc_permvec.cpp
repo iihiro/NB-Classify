@@ -21,18 +21,18 @@ void PermVec::gen_permvec(const size_t class_num)
 
 void PermVec::load_from_csvfile(const std::string& filename)
 {
-    std::ifstream infile(filename);
+    std::ifstream ifs(filename);
     std::string line;
 
     vec_.clear();
     
-    while (std::getline(infile, line)) {
+    while (std::getline(ifs, line)) {
         std::stringstream ss(line);
         int num;
 
         while (ss >> num){
             vec_.push_back(num);
-            if (ss.peek()== ',') {
+            if (ss.peek() == ',') {
                 ss.ignore();
             }
         }
