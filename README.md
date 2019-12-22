@@ -17,6 +17,7 @@ The library also provides a program for training your classification model and w
 1. Build and install [HElib](https://github.com/homenc/HElib) according to Option 1 in INSTALL.md with the `-DCMAKE_BUILD_TYPE=Release` option added to Step 2.
 2. Run the following commands at the root of NB-Classify library to build the library.
     ```sh
+    $ git submodule update -i
     $ mkdir build && cd build
     $ cmake ..
     $ make
