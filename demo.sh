@@ -3,6 +3,7 @@
 TOPDIR=`pwd`
 BINDIR=${TOPDIR}/build/demo
 DATDIR=${TOPDIR}/datasets
+TESTDIR=${TOPDIR}/testdata
 KEYOPT=-g
 
 while getopts s OPT; do
@@ -15,8 +16,9 @@ INFOFILE=${DATDIR}/sample_info.csv
 TESTFILE=${DATDIR}/sample_test.csv
 MODELFILE=${DATDIR}/sample_model.csv
 CONFFILE=${TOPDIR}/demo/ta/config.txt
+EXPCFILE=${TESTDIR}/sample_expect_result.txt
 
 xterm -T "TA"       -e "/bin/bash -c 'cd ${BINDIR}/ta     && ./ta ${KEYOPT} -t ${CONFFILE};          exec /bin/bash -i'"&
 xterm -T "CS"       -e "/bin/bash -c 'cd ${BINDIR}/cs     && ./cs;                                   exec /bin/bash -i'"&
 xterm -T "MP"       -e "/bin/bash -c 'cd ${BINDIR}/mp     && ./mp -i ${INFOFILE} -m ${MODELFILE};    exec /bin/bash -i'"&
-xterm -T "Client#1" -e "/bin/bash -c 'cd ${BINDIR}/client && time ./client -i ${INFOFILE} -t ${TESTFILE}; exec /bin/bash -i'"&
+xterm -T "Client#1" -e "/bin/bash -c 'cd ${BINDIR}/client && time ./client -i ${INFOFILE} -t ${TESTFILE} -v ${EXPCFILE}; exec /bin/bash -i'"&

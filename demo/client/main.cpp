@@ -19,6 +19,7 @@
 #include <string>
 #include <iostream>
 #include <cassert>
+#include <sstream>
 #include <stdsc/stdsc_log.hpp>
 #include <stdsc/stdsc_exception.hpp>
 #include <nbc_share/nbc_pubkey.hpp>
@@ -32,19 +33,62 @@
 static constexpr const char* INFO_FILENAME   = "../../../datasets/sample_info.csv";
 static constexpr const char* TEST_FILENAME   = "../../../datasets/sample_test.csv";
 static constexpr const char* PVEC_FILENAME   = "../../../testdata/permvec.txt"; // for test mode
+static constexpr const char* EXPC_FILENAME   = "../../../testdata/expect_result.txt"; // for verify
 static constexpr const char* PUBKEY_FILENAME = "pubkey.txt";
+
+void verify_result(const std::vector<std::string>& result_classes,
+                   const std::string& expect_filename)
+{
+    if (!nbc_share::utility::file_exist(expect_filename)) {
+        printf("%s is not found.\n", expect_filename.c_str());
+        return;
+    }
+    
+    std::ifstream ifs(expect_filename);
+    std::string line;
+
+    std::vector<std::string> expect_classes;
+    while (std::getline(ifs, line)) {
+        std::istringstream ss(line);
+        std::string cls;
+
+        while (std::getline(ss, cls, ',')) {
+            expect_classes.push_back(cls);
+        }
+    }
+
+    bool res = true;
+    std::cout << "Verifying results ..." << std::endl;
+    for (size_t i=0; i<result_classes.size(); ++i) {
+        auto& result = result_classes[i];
+        auto& expect = expect_classes[i];
+        printf("  expect: %s  - result: %s", expect.c_str(), result.c_str());
+        std::string verif;
+        if (result == expect) {
+            verif = "PASS";
+        } else {
+            verif = "NG";
+            res   = false;
+        }
+        printf(" : %s\n", verif.c_str());
+        fflush(stdout);
+    }
+    std::cout << "Verified: " << (res ? "PASS" : "NG") << std::endl;
+}
 
 struct Option
 {
-    std::string info_filename;
-    std::string test_filename;
+    std::string info_filename = INFO_FILENAME;
+    std::string test_filename = TEST_FILENAME;
+    std::string expc_filename = EXPC_FILENAME;
+    bool verify = false;
 };
 
 void init(Option& option, int argc, char* argv[])
 {
     int opt;
     opterr = 0;
-    while ((opt = getopt(argc, argv, "i:t:h")) != -1)
+    while ((opt = getopt(argc, argv, "i:t:v:h")) != -1)
     {
         switch (opt)
         {
@@ -54,9 +98,14 @@ void init(Option& option, int argc, char* argv[])
             case 't':
                 option.test_filename = optarg;
                 break;
+            case 'v':
+                option.verify = true;
+                option.expc_filename = optarg;
+                break;
             case 'h':
             default:
-                printf("Usage: %s \n", argv[0]);
+                printf("Usage: %s -i [-i info_filename] [-t test_filename] [-v expect_filename]\n",
+                       argv[0]);
                 exit(1);
         }
     }
@@ -69,12 +118,13 @@ struct ResultParam
 
 void result_cb(const std::vector<int64_t>& indexes, void* args)
 {
-    std::cout << "called result callback. (num of indexes: "
-              << indexes.size() << ")" << std::endl;
+    std::cout << "called result callback. Index after permutation: [";
     auto* param = static_cast<ResultParam*>(args);
     for (const auto& index : indexes) {
         param->indexes.push_back(index);
+        std::cout << index << " ";
     }
+    std::cout << "]" << std::endl;
 }
 
 void exec(Option& option)
@@ -87,10 +137,10 @@ void exec(Option& option)
                               host, PORT_CS_SRV1);
 
     nbc_share::InfoFile info;
-    info.read(INFO_FILENAME);
+    info.read(option.info_filename);
     
     nbc_client::Dataset dataset(info);
-    dataset.read(TEST_FILENAME);
+    dataset.read(option.test_filename);
     
     std::vector<nbc_share::PermVec> permvecs;
 
@@ -133,13 +183,21 @@ void exec(Option& option)
 
     client.wait();
 
+    std::vector<std::string> result_classes;
     for (size_t i=0; i<args.indexes.size(); ++i) {
         auto& permvec = permvecs[i];
         auto& index   = args.indexes[i];
         auto depermed = (permvec.vdata())[index];
-
+        auto cls      = info.class_names[depermed];
+        
         printf("Classification result of %ld: index=%ld, class=%s\n",
-               i+1, depermed, info.class_names[depermed].c_str());
+               i+1, depermed, cls.c_str());
+
+        result_classes.push_back(cls);
+    }
+
+    if (option.verify) {
+        verify_result(result_classes, option.expc_filename);
     }
 }
 
