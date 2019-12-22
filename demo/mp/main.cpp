@@ -53,7 +53,7 @@ void init(Option& option, int argc, char* argv[])
                 break;
             case 'h':
             default:
-                printf("Usage: %s \n", argv[0]);
+                printf("Usage: %s [-i info_filename] [-m model_filename]\n", argv[0]);
                 exit(1);
         }
     }

@@ -45,17 +45,14 @@ void init(Option& param, int argc, char* argv[])
 {
     int opt;
     opterr = 0;
-    while ((opt = getopt(argc, argv, "p:h")) != -1)
+    while ((opt = getopt(argc, argv, "h")) != -1)
     {
         switch (opt)
         {
-            case 'p':
-                param.pubkey_filename = optarg;
-                break;
             case 'h':
             default:
                 printf(
-                  "Usage: %s [-p pubkey_filename]\n", argv[0]);
+                  "Usage: %s\n", argv[0]);
                 exit(1);
         }
     }
