@@ -27,13 +27,6 @@
 #include <helib/EncryptedArray.h>
 #include <NTL/lzz_pXFactoring.h>
 
-namespace helib
-{
-    using FHEcontext = class Context;
-    using FHEPubKey  = class PubKey;
-    using FHESecKey  = class SecKey;
-}
-
 namespace nbc_share
 {
 
