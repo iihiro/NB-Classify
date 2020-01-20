@@ -40,7 +40,7 @@ class SecureKeyFileManager
 public:
     enum Kind_t : int32_t
     {
-        kKindUnkonw  = -1,
+        kKindUnknown = -1,
         kKindPubKey  = 0,
         kKindSecKey  = 1,
         kKindContext = 2,
