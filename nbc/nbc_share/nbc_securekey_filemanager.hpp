@@ -19,13 +19,7 @@
 #define NBC_SECUREKEY_FILEMANAGER
 
 #include <memory>
-
-namespace helib
-{
-    using FHEcontext = class Context;
-    using FHEPubKey  = class PubKey;
-    using FHESecKey  = class SecKey;
-}
+#include <nbc_share/nbc_helib_type.hpp>
 
 namespace nbc_share
 {
