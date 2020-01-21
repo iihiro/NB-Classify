@@ -19,6 +19,7 @@
 #define NBC_SECUREKEY_FILEMANAGER
 
 #include <memory>
+#include <nbc_share/nbc_helib_type.hpp>
 
 namespace nbc_share
 {
@@ -45,7 +46,7 @@ public:
         kKindSecKey  = 1,
         kKindContext = 2,
     };
-    
+
 public:
     SecureKeyFileManager(const std::string& pubkey_filename,
                          const std::string& seckey_filename,
@@ -62,7 +63,7 @@ public:
                          const std::string& seckey_filename,
                          const std::string& context_filename,
                          const std::string& config_filename);
-    
+
     ~SecureKeyFileManager(void) = default;
 
     void initialize(void);

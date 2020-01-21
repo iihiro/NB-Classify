@@ -21,12 +21,7 @@
 #include <iostream>
 #include <string>
 #include <memory>
-
-namespace helib
-{
-    class FHEcontext;
-    class FHEPubKey;
-}
+#include <nbc_share/nbc_helib_type.hpp>
 
 namespace nbc_share
 {
@@ -44,7 +39,7 @@ struct PubKey
 
     void save_to_file(const std::string& filepath) const;
     void load_from_file(const std::string& filepath);
-    
+
     const helib::FHEPubKey& get(void) const;
 
 private:
